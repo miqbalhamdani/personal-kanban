@@ -1,4 +1,4 @@
-export type ThemeId = 'flowdeck' | 'onyx' | 'outfit' | 'talcrm'
+export type ThemeId = 'intently' | 'onyx' | 'outfit' | 'talcrm'
 
 export interface ThemeMeta {
   id: ThemeId
@@ -11,8 +11,8 @@ export interface ThemeMeta {
 
 export const THEMES: ThemeMeta[] = [
   {
-    id: 'flowdeck',
-    label: 'Flowdeck',
+    id: 'intently',
+    label: 'Intently',
     description: 'Warm neutrals with orange and purple. The default.',
     swatches: ['#f9f9f7', '#c2410c', '#ff761d', '#504238'],
   },
@@ -37,10 +37,10 @@ export const THEMES: ThemeMeta[] = [
   },
 ]
 
-const KEY = 'flowdeck.theme'
+const KEY = 'intently.theme'
 const ids = new Set(THEMES.map(t => t.id))
 
-const theme = ref<ThemeId>('flowdeck')
+const theme = ref<ThemeId>('intently')
 let started = false
 
 export function useTheme() {
@@ -53,7 +53,7 @@ export function useTheme() {
 
     watch(theme, (value) => {
       // The head script in nuxt.config applies it pre-paint; this keeps it live.
-      if (value === 'flowdeck') delete document.documentElement.dataset.theme
+      if (value === 'intently') delete document.documentElement.dataset.theme
       else document.documentElement.dataset.theme = value
       try {
         localStorage.setItem(KEY, value)

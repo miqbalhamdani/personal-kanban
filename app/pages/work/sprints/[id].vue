@@ -307,5 +307,5 @@ const dayBoard = computed(() => days.value.map((date) => {
 
 const sum = (list: number[]) => list.reduce((a, b) => a + b, 0)
 
-useHead({ title: () => (sprint.value ? `${sprint.value.name} · Flowdeck` : 'Sprint · Flowdeck') })
+useHead({ title: () => (sprint.value ? `${sprint.value.name} · Intently` : 'Sprint · Intently') })
 </script>

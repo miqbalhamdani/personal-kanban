@@ -2,7 +2,7 @@ import type { Epic, Priority, Session, Sprint, SprintPhase, Status, StoreState, 
 import { addDays, diffDays, todayISO, toMinutes } from '~/utils/date'
 import { seedState, uid } from '~/utils/seed'
 
-const KEY = 'flowdeck.v1'
+const KEY = 'intently.v1'
 const SAVE_DEBOUNCE = 200
 
 const state = reactive<StoreState>({ tasks: [], sprints: [], epics: [] })

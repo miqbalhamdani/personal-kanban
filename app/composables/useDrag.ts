@@ -12,7 +12,7 @@ type Payload =
 const dragging = ref<Payload | null>(null)
 const overTarget = ref<string | null>(null)
 
-const MIME = 'application/x-flowdeck'
+const MIME = 'application/x-intently'
 
 export function useDrag() {
   function startTask(event: DragEvent, taskId: string) {

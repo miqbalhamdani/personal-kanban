@@ -1,4 +1,4 @@
-# Flowdeck
+# Intently
 
 Personal kanban and daily planning app — sprints, epics, and a day calendar, all in your browser. No backend, no login: everything lives in localStorage.
 
@@ -25,4 +25,4 @@ No database and no server code, so the app can be hosted as plain static files: 
 
 ## Data
 
-All state is persisted to localStorage (`flowdeck.*` keys) — clearing browser data resets the app. See [app/composables/useStore.ts](app/composables/useStore.ts).
+All state is persisted to localStorage (`intently.*` keys) — clearing browser data resets the app. See [app/composables/useStore.ts](app/composables/useStore.ts).
