@@ -71,13 +71,13 @@ function normaliseTask(t: Partial<Task>): Task {
   }
 }
 
+/* ---- lookups: module-scoped so every useStore() caller shares one computed ---- */
+const taskMap = computed(() => new Map(state.tasks.map(t => [t.id, t])))
+const epicMap = computed(() => new Map(state.epics.map(e => [e.id, e])))
+const sprintMap = computed(() => new Map(state.sprints.map(s => [s.id, s])))
+
 export function useStore() {
   if (import.meta.client) load()
-
-  /* ---- lookups ---- */
-  const taskMap = computed(() => new Map(state.tasks.map(t => [t.id, t])))
-  const epicMap = computed(() => new Map(state.epics.map(e => [e.id, e])))
-  const sprintMap = computed(() => new Map(state.sprints.map(s => [s.id, s])))
 
   const task = (id: string) => taskMap.value.get(id)
   const epic = (id: string | null) => (id ? epicMap.value.get(id) : undefined)

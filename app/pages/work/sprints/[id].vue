@@ -97,7 +97,7 @@
             :empty="!totalMinutes"
             :height="176"
           >
-            <SprintDonutChart :key="theme" :slices="slices" />
+            <LazySprintDonutChart :key="theme" :slices="slices" />
             <template #legend>
               <ChartLegend v-if="totalMinutes" :items="legend" />
             </template>
@@ -109,7 +109,7 @@
             :empty="!totalMinutes"
             :height="176"
           >
-            <SprintDailyChart :key="theme" :labels="dayLabels" :series="dailySeries" :totals="dailyTotals" />
+            <LazySprintDailyChart :key="theme" :labels="dayLabels" :series="dailySeries" :totals="dailyTotals" />
             <template #legend>
               <ChartLegend v-if="totalMinutes" :items="legend" />
             </template>

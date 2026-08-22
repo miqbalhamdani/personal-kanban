@@ -42,8 +42,9 @@
       <slot />
     </main>
 
-    <TaskPanel />
-    <SettingsDialog />
+    <!-- Deferred until first open so their chunks (reka dialog, date picker) stay off the first paint. -->
+    <LazyTaskPanel v-if="panelUsed" />
+    <LazySettingsDialog v-if="settingsUsed" />
   </div>
 </template>
 
@@ -53,6 +54,14 @@ import { Button } from '~/components/ui/button'
 
 const drawer = ref(false)
 const route = useRoute()
+
+// Latch on first open (instead of v-if on open) so close animations still play.
+const taskDialog = useTaskDialog()
+const settingsDialog = useSettingsDialog()
+const panelUsed = ref(false)
+const settingsUsed = ref(false)
+watch(taskDialog.open, v => { if (v) panelUsed.value = true })
+watch(settingsDialog.open, v => { if (v) settingsUsed.value = true })
 
 watch(() => route.fullPath, () => { drawer.value = false })
 
