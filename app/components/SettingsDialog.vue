@@ -8,7 +8,7 @@
         </DialogDescription>
       </DialogHeader>
 
-      <fieldset class="grid gap-2">
+      <fieldset class="grid max-h-[60vh] gap-2 overflow-y-auto p-0.5 scroll-thin">
         <legend class="sr-only">Theme</legend>
         <label
           v-for="t in themes"

@@ -24,8 +24,10 @@ export default defineNuxtConfig({
             ]
           : []),
         {
-          // Apply a saved non-default theme before first paint (SSR is off).
-          innerHTML: `try{var t=localStorage.getItem('intently.theme');if(t&&t!=='intently')document.documentElement.dataset.theme=t}catch(e){}`,
+          // Apply the saved theme before first paint (SSR is off). Falls back to
+          // the 'cobalt' default; bare :root holds the Intently palette, so a
+          // no-JS render still gets a complete, readable theme.
+          innerHTML: `try{document.documentElement.dataset.theme=localStorage.getItem('intently.theme')||'cobalt'}catch(e){}`,
         },
       ],
       meta: [
