@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <style>
+    .frame { stroke: #15251E; }
+    @media (prefers-color-scheme: dark) { .frame { stroke: #F2F4F1; } }
+  </style>
+  <g class="frame" stroke-width="6" stroke-linecap="round">
+    <path d="M8 26 L8 16 A8 8 0 0 1 16 8 L26 8"/>
+    <path d="M38 8 L48 8 A8 8 0 0 1 56 16 L56 26"/>
+    <path d="M56 38 L56 48 A8 8 0 0 1 48 56 L38 56"/>
+    <path d="M26 56 L16 56 A8 8 0 0 1 8 48 L8 38"/>
+  </g>
+  <rect x="26" y="26" width="12" height="12" rx="4" fill="#BE6240"/>
+</svg>

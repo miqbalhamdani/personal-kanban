@@ -45,12 +45,17 @@
     <!-- Deferred until first open so their chunks (reka dialog, date picker) stay off the first paint. -->
     <LazyTaskPanel v-if="panelUsed" />
     <LazySettingsDialog v-if="settingsUsed" />
+
+    <!-- Lives here, not in app.vue: only this layout raises toasts, and mounting
+         it globally pulled vue-sonner into the landing page's critical path. -->
+    <Toaster position="bottom-right" :duration="5000" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { Menu } from '@lucide/vue'
 import { Button } from '~/components/ui/button'
+import { Toaster } from '~/components/ui/sonner'
 
 const drawer = ref(false)
 const route = useRoute()

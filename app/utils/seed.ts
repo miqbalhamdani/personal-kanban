@@ -15,13 +15,13 @@ export function seedState(): StoreState {
     { id: 'epic_design', name: 'Design System', description: 'Tokens, typography and the shared component set.', dueDate: addDays(today, 12), priority: 'high', color: '#6941C6' },
     { id: 'epic_board', name: 'Kanban Core', description: 'Boards, columns, drag and drop, task lifecycle.', dueDate: addDays(today, 5), priority: 'high', color: '#C2410C' },
     { id: 'epic_time', name: 'Calendar & Time', description: 'Day calendar and time blocking of tracked work.', dueDate: addDays(today, 20), priority: 'medium', color: '#0F766E' },
-    { id: 'epic_insight', name: 'Analytics', description: 'Sprint retrospectives and productivity reporting.', dueDate: addDays(today, 34), priority: 'low', color: '#B45309' },
+    { id: 'epic_insight', name: 'Analytics', description: 'Sprint retrospectives and productivity reporting.', dueDate: addDays(today, 34), priority: 'low', color: '#BE185D' },
   ]
 
   const sprints: Sprint[] = [
-    { id: 'sprint_12', name: 'Sprint 12 · Foundations', startDate: addDays(today, -21), endDate: addDays(today, -8), order: 2 },
-    { id: 'sprint_13', name: 'Sprint 13 · Time Blocking', startDate: addDays(today, -4), endDate: addDays(today, 9), order: 1 },
-    { id: 'sprint_14', name: 'Sprint 14 · Polish', startDate: addDays(today, 10), endDate: addDays(today, 23), order: 0 },
+    { id: 'sprint_12', name: 'Sprint 12 · Foundations', startDate: addDays(today, -14), endDate: addDays(today, -8), order: 2 },
+    { id: 'sprint_13', name: 'Sprint 13 · Time Blocking', startDate: addDays(today, -2), endDate: addDays(today, 4), order: 1 },
+    { id: 'sprint_14', name: 'Sprint 14 · Polish', startDate: addDays(today, 5), endDate: addDays(today, 11), order: 0 },
   ]
 
   type Spec = [title: string, epic: string, sprint: string | null, status: Task['status'], priority: Task['priority'], due: number | null, desc: string]
@@ -33,6 +33,10 @@ export function seedState(): StoreState {
     ['Board column layout', 'epic_board', 'sprint_12', 'done', 'high', -10, 'Scrollable columns with counts and an inline add-task affordance.'],
     ['Task card anatomy', 'epic_board', 'sprint_12', 'done', 'medium', -9, 'Title, priority, due date, epic dot and sprint tag in one compact card.'],
     ['Local persistence layer', 'epic_board', 'sprint_12', 'done', 'high', -9, 'Debounced localStorage writes with a versioned schema.'],
+    ['Day calendar grid', 'epic_time', 'sprint_12', 'done', 'medium', -12, 'Hour rows from 6am to 10pm with a live now-line.'],
+    ['Session model and tracked minutes', 'epic_insight', 'sprint_12', 'done', 'medium', -10, 'One block of work is a date plus a start and an end; everything else derives from it.'],
+    ['Drop maths for time blocks', 'epic_time', 'sprint_12', 'in-progress', 'high', -8, 'Carried into Sprint 13: the drop still rounds to the wrong quarter hour near midnight.'],
+    ['Retrospective charts shell', 'epic_insight', 'sprint_12', 'in-progress', 'medium', -8, 'Carried into Sprint 13: doughnut and stacked bars render, the legend still needs a keyboard path.'],
     ['Spike: calendar grid options', 'epic_time', 'sprint_12', 'cancelled', 'low', -13, 'Compared a CSS grid against absolute positioning. Grid won; spike closed.'],
 
     // Sprint 13 — active. Due dates land inside the four-day focus window.
@@ -45,9 +49,9 @@ export function seedState(): StoreState {
     ['Empty states for every board', 'epic_design', 'sprint_13', 'backlog', 'low', 4, 'A blank column should say what to do next, not sit silent.'],
 
     // Sprint 14 — future.
-    ['Daily productivity chart', 'epic_insight', 'sprint_14', 'backlog', 'high', 12, 'Stacked bars per sprint day, split by epic share of tracked minutes.'],
-    ['Time spent doughnut', 'epic_insight', 'sprint_14', 'backlog', 'medium', 14, 'Where the sprint actually went, by epic.'],
-    ['Epic gantt timeline', 'epic_insight', 'sprint_14', 'backlog', 'medium', 16, 'One row per epic, bars spanning start to due date.'],
+    ['Daily productivity chart', 'epic_insight', 'sprint_14', 'backlog', 'high', 6, 'Stacked bars per sprint day, split by epic share of tracked minutes.'],
+    ['Time spent doughnut', 'epic_insight', 'sprint_14', 'backlog', 'medium', 8, 'Where the sprint actually went, by epic.'],
+    ['Epic gantt timeline', 'epic_insight', 'sprint_14', 'backlog', 'medium', 10, 'One row per epic, bars spanning start to due date.'],
 
     // Unassigned backlog.
     ['Export a sprint report', 'epic_insight', null, 'backlog', 'low', null, 'Nice to have: dump the retrospective numbers to CSV.'],
@@ -68,7 +72,7 @@ export function seedState(): StoreState {
     createdAt: Date.now() - (specs.length - i) * 3_600_000,
   }))
 
-  const byId = new Map(tasks.map(t => [t.id, t]))
+  const byTitle = (title: string) => tasks.find(t => t.title === title)!
 
   // Tracked work across the archived sprint: two or three blocks a weekday.
   const s12 = sprints[0]!
@@ -88,9 +92,9 @@ export function seedState(): StoreState {
   })
 
   // A partly planned day today, so the focus calendar opens with content.
-  byId.get('task_7')!.sessions.push({ id: uid('ses'), date: today, start: '09:30', end: '11:00' })
-  byId.get('task_8')!.sessions.push({ id: uid('ses'), date: today, start: '13:00', end: '14:30' })
-  byId.get('task_9')!.sessions.push({ id: uid('ses'), date: addDays(today, -1), start: '10:00', end: '12:00' })
+  byTitle('Drag a task onto a time slot').sessions.push({ id: uid('ses'), date: today, start: '09:30', end: '11:00' })
+  byTitle('Resize a scheduled block').sessions.push({ id: uid('ses'), date: today, start: '13:00', end: '14:30' })
+  byTitle('Four day focus board').sessions.push({ id: uid('ses'), date: addDays(today, -1), start: '10:00', end: '12:00' })
 
   return { tasks, sprints, epics }
 }

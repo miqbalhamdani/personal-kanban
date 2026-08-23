@@ -167,7 +167,7 @@ export function useStore() {
       id: uid('sprint'),
       name: patch.name || 'New sprint',
       startDate: patch.startDate || today,
-      endDate: patch.endDate || addDays(today, 13),
+      endDate: patch.endDate || addDays(today, 6),
       // New sprints go to the top of the Task list, matching the newest-first convention.
       order: patch.order ?? Math.min(0, ...state.sprints.map(s => s.order)) - 1,
     }
@@ -234,11 +234,12 @@ export function useStore() {
     }
   }
 
-  function resetToDemo() {
-    const fresh = seedState()
-    state.tasks = fresh.tasks
-    state.sprints = fresh.sprints
-    state.epics = fresh.epics
+  /** Wipes everything: tasks, sprints, epics. Persists the empty state so a reload stays empty. */
+  function clearAll() {
+    state.tasks = []
+    state.sprints = []
+    state.epics = []
+    persist()
   }
 
   return {
@@ -249,6 +250,6 @@ export function useStore() {
     addSession, updateSession, removeSession, sessionsOn, trackedMinutes,
     sprintPhase, addSprint, updateSprint, removeSprint, moveSprint,
     addEpic, updateEpic, removeEpic,
-    resetToDemo,
+    clearAll,
   }
 }

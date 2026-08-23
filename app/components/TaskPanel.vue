@@ -292,6 +292,8 @@ const sessionError = computed(() =>
     : '',
 )
 
+const fingerprint = () => JSON.stringify([form, sessions.value])
+
 // Load the form whenever the panel opens, and snapshot it for the dirty check.
 watch(isOpen, (value) => {
   if (!value) return
@@ -325,7 +327,6 @@ watch(isOpen, (value) => {
   })
 }, { immediate: true })
 
-const fingerprint = () => JSON.stringify([form, sessions.value])
 const dirty = computed(() => fingerprint() !== snapshot.value)
 
 function addBlock() {

@@ -43,7 +43,7 @@
       </p>
       <Button variant="ghost" size="sm" class="h-10 w-full justify-start gap-2 text-muted-foreground" @click="confirmReset">
         <RotateCcw class="size-3.5" />
-        Reset demo data
+        Clear all data
       </Button>
       <Button variant="ghost" size="sm" class="h-10 w-full justify-start gap-2 text-muted-foreground" @click="settings.open.value = true">
         <Settings2 class="size-3.5" />
@@ -63,7 +63,7 @@ const emit = defineEmits<{ navigate: [] }>()
 
 const route = useRoute()
 const settings = useSettingsDialog()
-const { state, resetToDemo, sprintPhase } = useStore()
+const { state, clearAll, sprintPhase } = useStore()
 
 const dueSoon = computed(() => {
   const today = todayISO()
@@ -79,7 +79,7 @@ const activeSprints = computed(() => state.sprints.filter(s => sprintPhase(s) ==
 const groups = computed(() => [
   {
     label: 'Focus',
-    items: [{ to: '/', label: 'Today', icon: CalendarCheck, count: dueSoon.value }],
+    items: [{ to: '/work', label: 'Today', icon: CalendarCheck, count: dueSoon.value }],
   },
   {
     label: 'Work',
@@ -92,12 +92,12 @@ const groups = computed(() => [
 ])
 
 const isActive = (item: { to: string }) =>
-  item.to === '/' ? route.path === '/' : route.path.startsWith(item.to)
+  item.to === '/work' ? route.path === '/work' : route.path.startsWith(item.to)
 
 function confirmReset() {
-  toast('Reset all data to the demo set?', {
-    description: 'Everything you have added in this browser will be replaced.',
-    action: { label: 'Reset', onClick: () => { resetToDemo(); toast.success('Demo data restored') } },
+  toast('Clear all data?', {
+    description: 'Every task, sprint and epic in this browser will be deleted.',
+    action: { label: 'Clear', onClick: () => { clearAll(); toast.success('All data cleared') } },
   })
 }
 </script>

@@ -83,7 +83,7 @@ const formId = useId()
 const existing = computed(() => (sprintId.value && sprintId.value !== 'new' ? store.sprint(sprintId.value) : undefined))
 
 const today = todayISO()
-const form = reactive({ name: '', startDate: today, endDate: addDays(today, 13) })
+const form = reactive({ name: '', startDate: today, endDate: addDays(today, 6) })
 const touched = ref(false)
 const snapshot = ref('')
 const confirming = ref(false)
@@ -108,7 +108,7 @@ watch(sprintId, (value) => {
   const s = existing.value
   Object.assign(form, s
     ? { name: s.name, startDate: s.startDate, endDate: s.endDate }
-    : { name: '', startDate: today, endDate: addDays(today, 13) })
+    : { name: '', startDate: today, endDate: addDays(today, 6) })
   snapshot.value = JSON.stringify(form)
 }, { immediate: true })
 

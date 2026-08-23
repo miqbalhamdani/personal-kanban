@@ -118,21 +118,46 @@
 
         <!-- Day-by-day board: a task appears on every day it was actually worked. -->
         <section class="min-w-0 rounded-2xl border bg-card p-4">
-        <header class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <header class="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 class="text-sm font-semibold">Day by day</h2>
             <p class="mt-0.5 text-[11px] text-muted-foreground">
-              Each column lists the tasks you tracked time against that day. Scroll sideways for the full sprint.
+              Each column lists the tasks you tracked time against that day.
             </p>
           </div>
-          <span class="tnum text-[11px] text-muted-foreground">{{ days.length }} columns</span>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="inline-flex rounded-lg border bg-card p-0.5" role="tablist" aria-label="Day range">
+              <button
+                v-for="m in DAY_MODES"
+                :key="m.id"
+                role="tab"
+                :aria-selected="mode === m.id"
+                class="inline-flex min-h-8 items-center rounded-md px-2.5 text-[12px] font-medium transition-colors duration-150"
+                :class="mode === m.id ? 'bg-brand-soft text-primary' : 'text-muted-foreground hover:text-foreground'"
+                @click="mode = m.id"
+              >
+                {{ m.label }}
+              </button>
+            </div>
+
+            <div class="flex items-center gap-1">
+              <Button variant="outline" size="icon-sm" :disabled="page <= 0" aria-label="Earlier days" @click="page--">
+                <ChevronLeft class="size-4" />
+              </Button>
+              <span class="tnum w-28 text-center text-[11px] text-muted-foreground">{{ rangeLabel }}</span>
+              <Button variant="outline" size="icon-sm" :disabled="page >= maxPage" aria-label="Later days" @click="page++">
+                <ChevronRight class="size-4" />
+              </Button>
+            </div>
+          </div>
         </header>
 
         <div class="flex gap-3 overflow-x-auto pb-2 scroll-thin">
           <section
-            v-for="day in dayBoard"
+            v-for="day in visibleDays"
             :key="day.date"
-            class="flex w-[228px] shrink-0 flex-col"
+            class="flex w-[228px] shrink-0 grow flex-col"
             :aria-label="`${fmtLongDate(day.date)}, ${day.entries.length} tasks`"
           >
             <!-- Ghost pill header, cards float below — same look as the Today board. -->
@@ -183,7 +208,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChartColumnBig, ChevronRight, GitBranch, ListTodo, Pencil, Plus } from '@lucide/vue'
+import { ChartColumnBig, ChevronLeft, ChevronRight, GitBranch, ListTodo, Pencil, Plus } from '@lucide/vue'
 import { Button } from '~/components/ui/button'
 import {
   eachDay, fmtDuration, fmtLongDate, fmtMonthDay, fmtWeekday, isWeekend, toMinutes,
@@ -237,6 +262,8 @@ const percentDone = computed(() => {
   if (!counted.length) return 0
   return Math.round((counted.filter(t => t.status === 'done').length / counted.length) * 100)
 })
+
+const sum = (list: number[]) => list.reduce((a, b) => a + b, 0)
 
 /** minutes[epicKey][dayIndex] — the one pass every chart below reads from. */
 const matrix = computed(() => {
@@ -305,7 +332,34 @@ const dayBoard = computed(() => days.value.map((date) => {
   return { date, entries, weekend: isWeekend(date), minutes: sum(entries.map(e => e.minutes)) }
 }))
 
-const sum = (list: number[]) => list.reduce((a, b) => a + b, 0)
+// Day-by-day window. Work week drops weekend columns; the others page over every day.
+const DAY_MODES = [
+  { id: '3d' as const, label: '3 days', size: 3, weekdaysOnly: false },
+  { id: '5d' as const, label: 'Work week', size: 5, weekdaysOnly: true },
+  { id: '7d' as const, label: 'Week', size: 7, weekdaysOnly: false },
+]
+const mode = ref<(typeof DAY_MODES)[number]['id']>('7d')
+const page = ref(0)
+const activeMode = computed(() => DAY_MODES.find(m => m.id === mode.value)!)
+
+const boardDays = computed(() =>
+  (activeMode.value.weekdaysOnly ? dayBoard.value.filter(d => !d.weekend) : dayBoard.value),
+)
+const maxPage = computed(() => Math.max(0, Math.ceil(boardDays.value.length / activeMode.value.size) - 1))
+const visibleDays = computed(() => {
+  const size = activeMode.value.size
+  return boardDays.value.slice(page.value * size, page.value * size + size)
+})
+
+const rangeLabel = computed(() => {
+  const first = visibleDays.value[0]
+  const last = visibleDays.value[visibleDays.value.length - 1]
+  if (!first || !last) return '—'
+  return first === last ? fmtMonthDay(first.date) : `${fmtMonthDay(first.date)} – ${fmtMonthDay(last.date)}`
+})
+
+// Switching mode or sprint can leave the cursor past the end.
+watch([mode, maxPage], () => { page.value = Math.min(page.value, maxPage.value) })
 
 useHead({ title: () => (sprint.value ? `${sprint.value.name} · Intently` : 'Sprint · Intently') })
 </script>

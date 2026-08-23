@@ -1,0 +1,8 @@
+# /work is the app itself: every one of its pages carries a static
+# `noindex, nofollow` in its HTML. It is deliberately NOT disallowed here —
+# blocking the crawl would stop Google from ever reading that noindex, which is
+# how URLs end up indexed with no content.
+User-agent: *
+Allow: /
+
+Sitemap: https://intently.web.id/sitemap.xml
