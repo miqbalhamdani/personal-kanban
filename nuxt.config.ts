@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite'
 
-// GA4 measurement ID, baked in at build time (static SPA, no server runtime).
-const gaId = process.env.NUXT_PUBLIC_GA_ID
+// GTM container, baked in at build time. Unset the env var to ship no tracking.
+const gtmId = process.env.NUXT_PUBLIC_GTM_ID
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
@@ -32,11 +32,10 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'en' },
       title: 'Intently',
       script: [
-        ...(gaId
+        ...(gtmId
           ? [
-              { src: `https://www.googletagmanager.com/gtag/js?id=${gaId}`, async: true },
               {
-                innerHTML: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${gaId}')`,
+                innerHTML: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f)})(window,document,'script','dataLayer','${gtmId}')`,
               },
             ]
           : []),
