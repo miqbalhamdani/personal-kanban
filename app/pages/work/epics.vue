@@ -23,7 +23,7 @@
           <div class="grow">
             <h2 class="text-sm font-semibold">Timeline</h2>
             <p class="mt-0.5 text-[11px] text-muted-foreground">
-              Each bar runs from the epic's earliest task to its due date. Expand an epic to see its tasks;
+              Each bar runs from the epic's start date to its end date. Expand an epic to see its tasks;
               click a name or bar to edit.
             </p>
           </div>
@@ -222,11 +222,13 @@ function taskSpan(t: Task): { start: string; end: string } | null {
   return dates.length ? { start: dates[0]!, end: dates.at(-1)! } : null
 }
 
+/** The epic's own window when it has both ends; otherwise stretched over whatever its tasks touch. */
 const epicSpans = computed(() => new Map(state.epics.map((e) => {
+  if (e.startDate && e.endDate) return [e.id, { start: e.startDate, end: e.endDate }]
   const dates = state.tasks
     .filter(t => t.epicId === e.id)
     .flatMap(t => { const s = taskSpan(t); return s ? [s.start, s.end] : [] })
-    .concat(e.dueDate ? [e.dueDate] : [])
+    .concat([e.startDate, e.endDate].filter((d): d is string => !!d))
     .sort()
   return [e.id, dates.length ? { start: dates[0]!, end: dates.at(-1)! } : null]
 })))

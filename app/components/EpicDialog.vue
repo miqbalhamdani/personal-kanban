@@ -20,18 +20,24 @@
 
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="grid gap-1.5">
-            <Label :for="`${formId}-due`">Due date</Label>
-            <DatePickerField :id="`${formId}-due`" v-model="form.dueDate" placeholder="No due date" clearable />
+            <Label :for="`${formId}-start`">Start date</Label>
+            <DatePickerField :id="`${formId}-start`" v-model="form.startDate" placeholder="No start date" clearable />
           </div>
           <div class="grid gap-1.5">
-            <Label :for="`${formId}-priority`">Priority</Label>
-            <Select v-model="form.priority">
-              <SelectTrigger :id="`${formId}-priority`" class="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="p in PRIORITIES" :key="p" :value="p">{{ PRIORITY_LABEL[p] }}</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label :for="`${formId}-end`">End date</Label>
+            <DatePickerField :id="`${formId}-end`" v-model="form.endDate" placeholder="No end date" clearable />
           </div>
+        </div>
+        <p role="alert" class="min-h-4 text-xs font-medium text-destructive">{{ rangeError }}</p>
+
+        <div class="grid gap-1.5">
+          <Label :for="`${formId}-priority`">Priority</Label>
+          <Select v-model="form.priority">
+            <SelectTrigger :id="`${formId}-priority`" class="w-full"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="p in PRIORITIES" :key="p" :value="p">{{ PRIORITY_LABEL[p] }}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <fieldset class="grid gap-2">
@@ -84,7 +90,7 @@
         <span v-else />
         <div class="flex gap-2">
           <Button type="button" variant="outline" @click="requestClose">Cancel</Button>
-          <Button type="submit" :form="formId" :disabled="!form.name.trim()">
+          <Button type="submit" :form="formId" :disabled="!form.name.trim() || !!rangeError">
             {{ existing ? 'Save epic' : 'Create epic' }}
           </Button>
         </div>
@@ -103,6 +109,7 @@ import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { Textarea } from '~/components/ui/textarea'
+import { diffDays } from '~/utils/date'
 import { EPIC_COLOR_NAMES, EPIC_COLORS, epicInk, PRIORITIES, PRIORITY_LABEL } from '~/utils/labels'
 
 const epicId = defineModel<string | null>('epicId', { required: true })
@@ -112,13 +119,19 @@ const formId = useId()
 
 const existing = computed(() => (epicId.value && epicId.value !== 'new' ? store.epic(epicId.value) : undefined))
 
-const blank = () => ({ name: '', description: '', dueDate: '', priority: 'medium' as Priority, color: EPIC_COLORS[1]! })
+const blank = () => ({ name: '', description: '', startDate: '', endDate: '', priority: 'medium' as Priority, color: EPIC_COLORS[1]! })
 const form = reactive(blank())
 const touched = ref(false)
 const snapshot = ref('')
 const confirming = ref(false)
 
 const nameError = computed(() => (touched.value && !form.name.trim() ? 'A name is required.' : ''))
+/** Either end may stay open; only a filled-in pair can be the wrong way round. */
+const rangeError = computed(() =>
+  form.startDate && form.endDate && diffDays(form.startDate, form.endDate) < 0
+    ? 'The end date must be on or after the start date.'
+    : '',
+)
 
 watch(epicId, (value) => {
   if (!value) return
@@ -126,7 +139,7 @@ watch(epicId, (value) => {
   confirming.value = false
   const e = existing.value
   Object.assign(form, blank(), e
-    ? { name: e.name, description: e.description, dueDate: e.dueDate ?? '', priority: e.priority, color: e.color }
+    ? { name: e.name, description: e.description, startDate: e.startDate ?? '', endDate: e.endDate ?? '', priority: e.priority, color: e.color }
     : { color: EPIC_COLORS[store.state.epics.length % EPIC_COLORS.length]! })
   snapshot.value = JSON.stringify(form)
 }, { immediate: true })
@@ -135,11 +148,12 @@ const dirty = computed(() => JSON.stringify(form) !== snapshot.value)
 
 function save() {
   touched.value = true
-  if (!form.name.trim()) return
+  if (!form.name.trim() || rangeError.value) return
   const patch = {
     name: form.name.trim(),
     description: form.description.trim(),
-    dueDate: form.dueDate || null,
+    startDate: form.startDate || null,
+    endDate: form.endDate || null,
     priority: form.priority,
     color: form.color,
   }

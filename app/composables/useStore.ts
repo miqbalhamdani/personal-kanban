@@ -29,6 +29,7 @@ function load() {
   state.sprints = source.sprints
   normaliseSprints(state.sprints)
   state.epics = source.epics
+  normaliseEpics(state.epics)
   const repainted = ensureEpicColors(state.epics)
   ready.value = true
 
@@ -78,6 +79,15 @@ function ensureEpicColors(epics: Epic[]) {
     changed = true
   })
   return changed
+}
+
+/** Older payloads gave an epic one due date; keep it as the end of its window. */
+function normaliseEpics(epics: (Epic & { dueDate?: string | null })[]) {
+  epics.forEach((e) => {
+    if (e.endDate === undefined) e.endDate = e.dueDate ?? null
+    if (e.startDate === undefined) e.startDate = null
+    delete e.dueDate
+  })
 }
 
 /** Guards against hand-edited or older payloads missing newer fields. */
@@ -264,7 +274,8 @@ export function useStore() {
       id: uid('epic'),
       name: patch.name || 'New epic',
       description: patch.description ?? '',
-      dueDate: patch.dueDate ?? null,
+      startDate: patch.startDate ?? null,
+      endDate: patch.endDate ?? null,
       priority: patch.priority ?? 'medium',
       color: patch.color || EPIC_COLORS[0]!,
     }

@@ -39,7 +39,9 @@ export interface Epic {
   id: string
   name: string
   description: string
-  dueDate: string | null
+  /** Planned window on the epics timeline. Either end can be open. */
+  startDate: string | null
+  endDate: string | null
   priority: Priority
   color: string
 }

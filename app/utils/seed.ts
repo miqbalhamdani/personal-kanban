@@ -12,10 +12,10 @@ export function seedState(): StoreState {
   const today = todayISO()
 
   const epics: Epic[] = [
-    { id: 'epic_design', name: 'Design System', description: 'Tokens, typography and the shared component set.', dueDate: addDays(today, 12), priority: 'high', color: '#3D4A81' },
-    { id: 'epic_board', name: 'Kanban Core', description: 'Boards, columns, drag and drop, task lifecycle.', dueDate: addDays(today, 5), priority: 'high', color: '#FADE7D' },
-    { id: 'epic_time', name: 'Calendar & Time', description: 'Day calendar and time blocking of tracked work.', dueDate: addDays(today, 20), priority: 'medium', color: '#AC90BB' },
-    { id: 'epic_insight', name: 'Analytics', description: 'Sprint retrospectives and productivity reporting.', dueDate: addDays(today, 34), priority: 'low', color: '#589651' },
+    { id: 'epic_design', name: 'Design System', description: 'Tokens, typography and the shared component set.', startDate: addDays(today, -14), endDate: addDays(today, 12), priority: 'high', color: '#3D4A81' },
+    { id: 'epic_board', name: 'Kanban Core', description: 'Boards, columns, drag and drop, task lifecycle.', startDate: addDays(today, -10), endDate: addDays(today, 5), priority: 'high', color: '#FADE7D' },
+    { id: 'epic_time', name: 'Calendar & Time', description: 'Day calendar and time blocking of tracked work.', startDate: addDays(today, -2), endDate: addDays(today, 20), priority: 'medium', color: '#AC90BB' },
+    { id: 'epic_insight', name: 'Analytics', description: 'Sprint retrospectives and productivity reporting.', startDate: addDays(today, 5), endDate: addDays(today, 34), priority: 'low', color: '#589651' },
   ]
 
   const sprints: Sprint[] = [
