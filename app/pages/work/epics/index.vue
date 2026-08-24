@@ -24,7 +24,7 @@
             <h2 class="text-sm font-semibold">Timeline</h2>
             <p class="mt-0.5 text-[11px] text-muted-foreground">
               Each bar runs from the epic's start date to its end date. Expand an epic to see its tasks;
-              click a name or bar to edit.
+              click a name or bar to open it.
             </p>
           </div>
           <div class="inline-flex rounded-lg border p-0.5" role="group" aria-label="Timeline zoom">
@@ -89,7 +89,12 @@
                     />
                   </button>
                   <span class="size-2.5 shrink-0 rounded-full" :style="{ background: epic.color }" aria-hidden="true" />
-                  <button type="button" class="min-w-0 grow rounded-md text-left" @click="editing = epic.id">
+                  <button
+                    type="button"
+                    class="min-w-0 grow rounded-md text-left"
+                    :aria-label="`${epic.name}. Open epic detail.`"
+                    @click="navigateTo(`/work/epics/${epic.id}`)"
+                  >
                     <p class="truncate text-[13px] font-medium">{{ epic.name }}</p>
                     <p class="tnum truncate text-[10px] text-muted-foreground">
                       {{ epic.doneCount }}/{{ epic.taskCount }} done · {{ PRIORITY_LABEL[epic.priority] }}
@@ -111,7 +116,8 @@
                       color: epicInk(epic.color),
                     }"
                     :title="`${epic.name}: ${fmtMonthDay(epic.bar.start)} – ${fmtMonthDay(epic.bar.end)}`"
-                    @click="editing = epic.id"
+                    :aria-label="`${epic.name}, ${fmtMonthDay(epic.bar.start)} to ${fmtMonthDay(epic.bar.end)}. Open epic detail.`"
+                    @click="navigateTo(`/work/epics/${epic.id}`)"
                   >
                     <!-- Clipping lives on this inner layer: overflow-hidden on the button
                          itself would also clip its 44px hit overlay. -->

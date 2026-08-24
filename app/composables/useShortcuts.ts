@@ -1,5 +1,6 @@
 import type { Component } from 'vue'
 import { CalendarCheck, GitBranch, Keyboard, Layers, ListTodo, Settings2 } from '@lucide/vue'
+import type { Task } from '~/types'
 
 /**
  * Single-key shortcuts, on one keydown listener owned by the layout.
@@ -25,6 +26,8 @@ export function useShortcuts() {
   const epic = useEpicDialog()
   const sprint = useSprintDialog()
   const settings = useSettingsDialog()
+  const route = useRoute()
+  const store = useStore()
 
   /** The epic and sprint editors are mounted by their own page, so land there first.
    *  The nextTick lets the layout's route watcher clear stale dialog state before we set ours. */
@@ -34,11 +37,20 @@ export function useShortcuts() {
     target.value = 'new'
   }
 
+  /** On an epic or sprint detail page `n` seeds the same parent that page's New task button does,
+   *  so the keyboard and the button can't disagree. The lookup drops an id that no longer exists. */
+  function newTaskDefaults(): Partial<Task> {
+    const id = String(route.params.id ?? '')
+    if (id && route.path.startsWith('/work/epics/') && store.epic(id)) return { status: 'todo', epicId: id }
+    if (id && route.path.startsWith('/work/sprints/') && store.sprint(id)) return { status: 'todo', sprintId: id }
+    return { status: 'todo' }
+  }
+
   const groups: ShortcutGroup[] = [
     {
       title: 'Create',
       items: [
-        { key: 'n', label: 'New task', icon: ListTodo, run: () => task.openNew({ status: 'todo' }) },
+        { key: 'n', label: 'New task', icon: ListTodo, run: () => task.openNew(newTaskDefaults()) },
         { key: 'e', label: 'New epic', icon: Layers, run: () => openOnPage('/work/epics', epic.epicId) },
         { key: 's', label: 'New sprint', icon: GitBranch, run: () => openOnPage('/work/sprints', sprint.sprintId) },
       ],
