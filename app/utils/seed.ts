@@ -46,16 +46,16 @@ export function seedState(): StoreState {
     ['Context menu on task cards', 'epic_board', 'sprint_13', 'todo', 'medium', 1, 'Right click for edit, move, schedule and delete.'],
     ['Keyboard path for every drag', 'epic_design', 'sprint_13', 'todo', 'high', 2, 'Native drag has no touch support, so the menu must cover the same moves.'],
     ['Sprint list grouped by phase', 'epic_insight', 'sprint_13', 'todo', 'medium', 3, 'Active, future and archived sections derived from the sprint dates.'],
-    ['Empty states for every board', 'epic_design', 'sprint_13', 'backlog', 'low', 4, 'A blank column should say what to do next, not sit silent.'],
+    ['Empty states for every board', 'epic_design', 'sprint_13', 'todo', 'low', 4, 'A blank column should say what to do next, not sit silent.'],
 
     // Sprint 14 — future.
-    ['Daily productivity chart', 'epic_insight', 'sprint_14', 'backlog', 'high', 6, 'Stacked bars per sprint day, split by epic share of tracked minutes.'],
-    ['Time spent doughnut', 'epic_insight', 'sprint_14', 'backlog', 'medium', 8, 'Where the sprint actually went, by epic.'],
-    ['Epic gantt timeline', 'epic_insight', 'sprint_14', 'backlog', 'medium', 10, 'One row per epic, bars spanning start to due date.'],
+    ['Daily productivity chart', 'epic_insight', 'sprint_14', 'todo', 'high', 6, 'Stacked bars per sprint day, split by epic share of tracked minutes.'],
+    ['Time spent doughnut', 'epic_insight', 'sprint_14', 'todo', 'medium', 8, 'Where the sprint actually went, by epic.'],
+    ['Epic gantt timeline', 'epic_insight', 'sprint_14', 'todo', 'medium', 10, 'One row per epic, bars spanning start to due date.'],
 
     // Unassigned backlog.
-    ['Export a sprint report', 'epic_insight', null, 'backlog', 'low', null, 'Nice to have: dump the retrospective numbers to CSV.'],
-    ['Dark mode pass', 'epic_design', null, 'backlog', 'low', null, 'Needs its own contrast review before it ships.'],
+    ['Export a sprint report', 'epic_insight', null, 'todo', 'low', null, 'Nice to have: dump the retrospective numbers to CSV.'],
+    ['Dark mode pass', 'epic_design', null, 'todo', 'low', null, 'Needs its own contrast review before it ships.'],
   ]
 
   const tasks: Task[] = specs.map(([title, epicId, sprintId, status, priority, due, description], i) => ({

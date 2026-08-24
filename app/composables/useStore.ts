@@ -100,7 +100,8 @@ function normaliseTask(t: Partial<Task>): Task {
     dueDate: t.dueDate ?? null,
     sprintId: t.sprintId ?? null,
     epicId: t.epicId ?? null,
-    status: (t.status ?? 'backlog') as Status,
+    // 'backlog' was folded into 'todo'; older blobs still carry it.
+    status: ((t.status as string) === 'backlog' ? 'todo' : t.status ?? 'todo') as Status,
     sessions: Array.isArray(t.sessions) ? t.sessions.filter(s => s?.date && s?.start && s?.end) : [],
     order: t.order ?? 0,
     createdAt: t.createdAt ?? Date.now(),

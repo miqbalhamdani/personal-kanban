@@ -1,6 +1,6 @@
 export type Priority = 'high' | 'medium' | 'low'
 
-export type Status = 'backlog' | 'todo' | 'in-progress' | 'done' | 'cancelled'
+export type Status = 'todo' | 'in-progress' | 'done' | 'cancelled'
 
 /** One block of tracked work: "I worked on this task on this date, from → to". */
 export interface Session {

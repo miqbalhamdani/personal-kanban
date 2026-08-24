@@ -272,7 +272,7 @@ const sprintGroups = computed(() => {
 const blank = () => ({
   title: '',
   description: '',
-  status: 'backlog' as Status,
+  status: 'todo' as Status,
   priority: 'medium' as Priority,
   dueDate: '',
   sprintId: 'none',

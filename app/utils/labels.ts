@@ -1,10 +1,9 @@
 import type { Priority, Status } from '~/types'
 
-export const STATUSES: Status[] = ['backlog', 'todo', 'in-progress', 'done', 'cancelled']
+export const STATUSES: Status[] = ['todo', 'in-progress', 'done', 'cancelled']
 export const PRIORITIES: Priority[] = ['high', 'medium', 'low']
 
 export const STATUS_LABEL: Record<Status, string> = {
-  'backlog': 'Backlog',
   'todo': 'Todo',
   'in-progress': 'In Progress',
   'done': 'Done',
@@ -14,7 +13,6 @@ export const STATUS_LABEL: Record<Status, string> = {
 /* Tinted pill + dark text: contrast stays >= 4.5:1 and the label always
    carries the meaning, so colour is never the only signal. */
 export const STATUS_CLASS: Record<Status, string> = {
-  'backlog': 'bg-muted text-muted-foreground',
   'todo': 'bg-purple-soft text-accent-foreground',
   'in-progress': 'bg-brand-soft text-primary',
   'done': 'bg-emerald-100 text-emerald-800',
@@ -22,7 +20,6 @@ export const STATUS_CLASS: Record<Status, string> = {
 }
 
 export const STATUS_DOT: Record<Status, string> = {
-  'backlog': 'bg-muted-foreground',
   'todo': 'bg-purple',
   'in-progress': 'bg-brand',
   'done': 'bg-emerald-600',
