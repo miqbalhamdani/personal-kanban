@@ -22,6 +22,23 @@
           <Stat :value="`${percentDone}%`" label="completed" />
           <Stat :value="fmtDuration(totalMinutes)" label="tracked" />
         </div>
+        <!-- The hint sits on the wrapper: a disabled Button is pointer-events-none, so its own title never shows. -->
+        <span
+          v-if="sprint.phase === 'future'"
+          :title="activeSprint ? `End ${activeSprint.name} before starting another sprint.` : undefined"
+        >
+          <Button class="cursor-pointer gap-1.5" :disabled="!!activeSprint" @click="start(sprint)">
+            <Play class="size-3.5" /> Start
+          </Button>
+        </span>
+        <Button
+          v-else-if="sprint.phase === 'active'"
+          variant="outline"
+          class="cursor-pointer gap-1.5"
+          @click="finish(sprint)"
+        >
+          <Flag class="size-3.5" /> End
+        </Button>
         <Button variant="outline" class="gap-1.5" @click="editing = sprint.id">
           <Pencil class="size-3.5" /> Edit
         </Button>
@@ -208,7 +225,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChartColumnBig, ChevronLeft, ChevronRight, GitBranch, ListTodo, Pencil, Plus } from '@lucide/vue'
+import { ChartColumnBig, ChevronLeft, ChevronRight, Flag, GitBranch, ListTodo, Pencil, Play, Plus } from '@lucide/vue'
 import { Button } from '~/components/ui/button'
 import {
   eachDay, fmtDuration, fmtLongDate, fmtMonthDay, fmtWeekday, isWeekend, toMinutes,
@@ -218,7 +235,8 @@ import { PRIORITY_RANK, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/label
 const route = useRoute()
 const router = useRouter()
 const store = useStore()
-const { state } = store
+const { state, activeSprint } = store
+const { start, finish } = useSprintActions()
 const dialog = useTaskDialog()
 const { theme } = useTheme()
 
@@ -255,7 +273,7 @@ const statusGroups = computed(() => STATUSES
 
 const newTask = () => dialog.openNew({ sprintId: sprint.value?.id, status: 'todo' })
 
-const editing = ref<string | null>(null)
+const { sprintId: editing } = useSprintDialog()
 
 const percentDone = computed(() => {
   const counted = sprintTasks.value.filter(t => t.status !== 'cancelled')

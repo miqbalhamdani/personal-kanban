@@ -118,7 +118,6 @@
 
 <script setup lang="ts">
 import { ChevronRight, Flag, Play, Plus } from '@lucide/vue'
-import { toast } from 'vue-sonner'
 import type { Sprint, SprintPhase } from '~/types'
 import { Button } from '~/components/ui/button'
 import { diffDays, fmtDayMonth, fmtDuration } from '~/utils/date'
@@ -130,17 +129,9 @@ const subtitle = computed(() =>
   `${state.sprints.length} sprints · ${activeSprint.value ? `${activeSprint.value.name} running` : 'nothing running'}`,
 )
 
-function start(s: Sprint) {
-  if (!store.startSprint(s.id)) return
-  toast.success(`Started "${s.name}"`, { description: 'Today is day one. It moved to Active.' })
-}
+const { start, finish } = useSprintActions()
 
-function finish(s: Sprint) {
-  store.endSprint(s.id)
-  toast.success(`Ended "${s.name}"`, { description: 'Today is its last day. It moved to Archived.' })
-}
-
-const editing = ref<string | null>(null)
+const { sprintId: editing } = useSprintDialog()
 const collapsed = ref(new Set<string>())
 
 const toggle = (key: string) => {

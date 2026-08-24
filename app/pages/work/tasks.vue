@@ -2,7 +2,7 @@
   <div class="flex h-[calc(100dvh-3.5rem)] flex-col lg:h-dvh">
     <PageHeader title="Task" :subtitle="`${open.length} open of ${state.tasks.length}`">
       <template #actions>
-        <Button class="gap-1.5" @click="dialog.openNew({ status: 'backlog' })">
+        <Button class="gap-1.5" @click="dialog.openNew({ status: 'todo' })">
           <Plus class="size-4" /> New task
         </Button>
       </template>
@@ -180,7 +180,7 @@
         :dot="STATUS_DOT[status]"
         addable
         :empty-text="`Nothing in ${STATUS_LABEL[status].toLowerCase()}.`"
-        @add="dialog.openNew({ status })"
+        @add="dialog.openNew({ status, sprintId: activeSprint?.id })"
         @drop-task="id => onDropOnStatus(id, status)"
       />
     </div>
@@ -207,19 +207,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~
 import { PRIORITIES, PRIORITY_LABEL, PRIORITY_RANK, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
 
 const store = useStore()
-const { state } = store
+const { state, activeSprint } = store
 const dialog = useTaskDialog()
 const actions = useTaskActions()
 const { dragging, startSprint, over, leave, isOver, end, isDraggingSprint } = useDrag()
 const draggingTask = computed(() => dragging.value?.kind === 'task')
 const draggingSprint = computed(() => dragging.value?.kind === 'sprint')
 
-const views = [
+/** Board is the running sprint's work surface, so it only exists while one runs. */
+const views = computed(() => [
   { id: 'list' as const, label: 'List', icon: ListTodo },
-  { id: 'board' as const, label: 'Board', icon: Columns3 },
+  ...(activeSprint.value ? [{ id: 'board' as const, label: 'Board', icon: Columns3 }] : []),
   { id: 'calendar' as const, label: 'Calendar', icon: CalendarDays },
-]
+])
 const tab = ref<'list' | 'board' | 'calendar'>('board')
+// Covers both the initial default and a sprint ended from another page while this one is open.
+watch(activeSprint, (s) => { if (!s && tab.value === 'board') tab.value = 'list' }, { immediate: true })
 const query = ref('')
 const epicFilter = ref('all')
 const priorityFilter = ref('all')
@@ -268,9 +271,11 @@ const sprintGroups = computed(() => {
   return draggingTask.value ? groups : groups.filter(g => g.tasks.length)
 })
 
-const byStatus = computed(() =>
-  Object.fromEntries(STATUSES.map(s => [s, sortTasks(filtered.value.filter(t => t.status === s))])) as Record<Status, typeof state.tasks>,
-)
+/** Board only — scoped to the active sprint, so it never renders without one. */
+const byStatus = computed(() => {
+  const inSprint = filtered.value.filter(t => t.sprintId === activeSprint.value?.id)
+  return Object.fromEntries(STATUSES.map(s => [s, sortTasks(inSprint.filter(t => t.status === s))])) as Record<Status, typeof state.tasks>
+})
 
 const toggle = (key: string) => {
   const next = new Set(collapsed.value)
@@ -365,7 +370,7 @@ function insertTask(taskId: string, sprintId: string | null, beforeId: string | 
 }
 
 /* ---- sprint header kebab ---- */
-const editingSprint = ref<string | null>(null)
+const { sprintId: editingSprint } = useSprintDialog()
 /** Sprint sections in display order; the kebab and its disabled edges follow these, not the global order. */
 const sprintKeys = computed(() => sprintGroups.value.filter(g => g.key !== 'none').map(g => g.key))
 
