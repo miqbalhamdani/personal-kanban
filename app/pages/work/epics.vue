@@ -103,11 +103,12 @@
                   <button
                     v-if="epic.bar"
                     type="button"
-                    class="hit absolute top-1/2 flex h-8 -translate-y-1/2 items-center gap-1.5 rounded-full px-2.5 text-left text-[11px] font-semibold text-white shadow-[0_1px_3px_rgba(80,66,56,0.2)] transition-transform duration-150 hover:scale-[1.01]"
+                    class="hit absolute top-1/2 flex h-8 -translate-y-1/2 items-center gap-1.5 rounded-full px-2.5 text-left text-[11px] font-semibold shadow-[0_1px_3px_rgba(80,66,56,0.2)] transition-transform duration-150 hover:scale-[1.01]"
                     :style="{
                       left: `${epic.bar.offset * dayPx + 2}px`,
                       width: `${Math.max(epic.bar.length * dayPx - 4, 26)}px`,
                       background: epic.color,
+                      color: epicInk(epic.color),
                     }"
                     :title="`${epic.name}: ${fmtMonthDay(epic.bar.start)} – ${fmtMonthDay(epic.bar.end)}`"
                     @click="editing = epic.id"
@@ -119,7 +120,7 @@
                       class="pointer-events-none absolute inset-0 overflow-hidden rounded-full"
                       aria-hidden="true"
                     >
-                      <span class="absolute inset-y-0 left-0 bg-white/25" :style="{ width: `${epic.percent}%` }" />
+                      <span class="absolute inset-y-0 left-0" :style="{ width: `${epic.percent}%`, background: epicVeil(epic.color) }" />
                     </span>
                     <span class="relative truncate">{{ epic.name }}</span>
                     <span class="tnum relative ml-auto shrink-0 opacity-90">{{ epic.percent }}%</span>
@@ -196,7 +197,7 @@ import { Button } from '~/components/ui/button'
 import {
   addDays, diffDays, eachDay, fmtMonthDay, fromISO, isWeekend, todayISO,
 } from '~/utils/date'
-import { PRIORITY_LABEL, PRIORITY_RANK, STATUS_DOT, STATUS_LABEL } from '~/utils/labels'
+import { epicInk, epicVeil, PRIORITY_LABEL, PRIORITY_RANK, STATUS_DOT, STATUS_LABEL } from '~/utils/labels'
 
 const store = useStore()
 const { state } = store

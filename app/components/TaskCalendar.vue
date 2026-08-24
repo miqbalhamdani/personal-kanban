@@ -89,7 +89,7 @@ import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { Task } from '~/types'
 import { Button } from '~/components/ui/button'
 import { addDays, eachDay, fmtLongDate, fmtWeekday, fromISO, isWeekend, toISO, todayISO } from '~/utils/date'
-import { PRIORITY_RANK } from '~/utils/labels'
+import { epicTint, PRIORITY_RANK } from '~/utils/labels'
 
 const props = defineProps<{ tasks: Task[] }>()
 
@@ -147,13 +147,9 @@ const visible = (date: string) => {
   return expanded.value.has(date) ? list : list.slice(0, CHIP_CAP)
 }
 
-/** Same tinted-pill recipe as TaskCard's epic badge; ink toward foreground stays AA. */
 function chipStyle(t: Task) {
   const epic = store.epic(t.epicId)
-  return epic && {
-    background: `color-mix(in srgb, ${epic.color} 12%, var(--card))`,
-    color: `color-mix(in srgb, ${epic.color} 55%, var(--foreground))`,
-  }
+  return epic && epicTint(epic.color)
 }
 
 function onDrop(date: string) {

@@ -107,7 +107,7 @@ import {
   ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger, ContextMenuTrigger,
 } from '~/components/ui/context-menu'
 import { addDays, fmtRelativeDay, todayISO } from '~/utils/date'
-import { PRIORITY_LABEL, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
+import { epicTint, PRIORITY_LABEL, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
 
 const props = withDefaults(defineProps<{
   task: Task
@@ -127,11 +127,7 @@ const overdue = computed(() =>
   && props.task.status !== 'cancelled',
 )
 
-/** Tinted pill from the epic colour; ink mixed toward the foreground stays AA on any theme. */
-const epicBadgeStyle = computed(() => epic.value && ({
-  background: `color-mix(in srgb, ${epic.value.color} 12%, var(--card))`,
-  color: `color-mix(in srgb, ${epic.value.color} 55%, var(--foreground))`,
-}))
+const epicBadgeStyle = computed(() => epic.value && epicTint(epic.value.color))
 
 function onDragStart(event: DragEvent) {
   if (!props.draggable) return

@@ -25,7 +25,7 @@
           <p v-if="task.description" class="truncate text-[11px] text-muted-foreground">{{ task.description }}</p>
         </div>
 
-        <span v-if="epic" class="hidden shrink-0 items-center gap-1.5 text-[11px] font-medium sm:inline-flex" :style="{ color: `color-mix(in srgb, ${epic.color} 55%, var(--foreground))` }">
+        <span v-if="epic" class="hidden shrink-0 items-center gap-1.5 text-[11px] font-medium sm:inline-flex" :style="{ color: epicTextColor(epic.color) }">
           <span class="size-2 rounded-full" :style="{ background: epic.color }" aria-hidden="true" />
           {{ epic.name }}
         </span>
@@ -121,7 +121,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { fmtDuration, fmtRelativeDay, todayISO } from '~/utils/date'
-import { STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
+import { epicTextColor, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
 
 const props = defineProps<{ task: Task; reorder?: { upDisabled: boolean; downDisabled: boolean } }>()
 const emit = defineEmits<{ moveUp: []; moveDown: [] }>()

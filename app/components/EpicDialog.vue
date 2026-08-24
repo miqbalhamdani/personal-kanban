@@ -49,9 +49,9 @@
                 name="epic-color"
                 :value="color"
                 class="absolute size-full cursor-pointer opacity-0"
-                :aria-label="`Colour ${color}`"
+                :aria-label="`Colour ${EPIC_COLOR_NAMES[color] ?? color}`"
               >
-              <Check v-if="form.color === color" class="size-4 text-white" aria-hidden="true" />
+              <Check v-if="form.color === color" class="size-4" :style="{ color: epicInk(color) }" aria-hidden="true" />
             </label>
           </div>
           <p class="text-xs text-muted-foreground">
@@ -103,7 +103,7 @@ import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { Textarea } from '~/components/ui/textarea'
-import { EPIC_COLORS, PRIORITIES, PRIORITY_LABEL } from '~/utils/labels'
+import { EPIC_COLOR_NAMES, EPIC_COLORS, epicInk, PRIORITIES, PRIORITY_LABEL } from '~/utils/labels'
 
 const epicId = defineModel<string | null>('epicId', { required: true })
 

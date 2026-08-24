@@ -56,6 +56,7 @@ import {
   ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
 } from '~/components/ui/context-menu'
 import { toMinutes, toTime } from '~/utils/date'
+import { epicTextColor } from '~/utils/labels'
 
 const props = defineProps<{ task: Task; session: Session; pxPerMin: number }>()
 const emit = defineEmits<{ nudge: [minutes: number]; resize: [minutes: number] }>()
@@ -69,7 +70,7 @@ const tall = computed(() => length.value >= 45)
 const epic = computed(() => store.epic(props.task.epicId))
 const accent = computed(() => epic.value?.color || 'var(--primary)')
 // Text needs more contrast than the border stripe: mix toward the foreground.
-const ink = computed(() => `color-mix(in srgb, ${accent.value} 55%, var(--foreground))`)
+const ink = computed(() => epicTextColor(accent.value))
 
 const style = computed(() => ({
   top: `${toMinutes(props.session.start) * props.pxPerMin}px`,
