@@ -8,6 +8,7 @@ import type { Status } from '~/types'
 type Payload =
   | { kind: 'task'; taskId: string }
   | { kind: 'session'; taskId: string; sessionId: string; grabOffset: number }
+  | { kind: 'sprint'; sprintId: string }
 
 const dragging = ref<Payload | null>(null)
 const overTarget = ref<string | null>(null)
@@ -32,6 +33,14 @@ export function useDrag() {
     event.dataTransfer.setData('text/plain', sessionId)
   }
 
+  function startSprint(event: DragEvent, sprintId: string) {
+    dragging.value = { kind: 'sprint', sprintId }
+    if (!event.dataTransfer) return
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData(MIME, sprintId)
+    event.dataTransfer.setData('text/plain', sprintId)
+  }
+
   function end() {
     dragging.value = null
     overTarget.value = null
@@ -52,16 +61,20 @@ export function useDrag() {
   const isOver = (targetId: string) => overTarget.value === targetId
   const isDraggingTask = (taskId: string) =>
     dragging.value?.kind === 'task' && dragging.value.taskId === taskId
+  const isDraggingSprint = (sprintId: string) =>
+    dragging.value?.kind === 'sprint' && dragging.value.sprintId === sprintId
 
   return {
     dragging: readonly(dragging),
     startTask,
     startSession,
+    startSprint,
     end,
     over,
     leave,
     isOver,
     isDraggingTask,
+    isDraggingSprint,
   }
 }
 

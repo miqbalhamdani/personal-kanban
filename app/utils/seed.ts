@@ -12,16 +12,16 @@ export function seedState(): StoreState {
   const today = todayISO()
 
   const epics: Epic[] = [
-    { id: 'epic_design', name: 'Design System', description: 'Tokens, typography and the shared component set.', dueDate: addDays(today, 12), priority: 'high', color: '#6941C6' },
-    { id: 'epic_board', name: 'Kanban Core', description: 'Boards, columns, drag and drop, task lifecycle.', dueDate: addDays(today, 5), priority: 'high', color: '#C2410C' },
-    { id: 'epic_time', name: 'Calendar & Time', description: 'Day calendar and time blocking of tracked work.', dueDate: addDays(today, 20), priority: 'medium', color: '#0F766E' },
-    { id: 'epic_insight', name: 'Analytics', description: 'Sprint retrospectives and productivity reporting.', dueDate: addDays(today, 34), priority: 'low', color: '#BE185D' },
+    { id: 'epic_design', name: 'Design System', description: 'Tokens, typography and the shared component set.', dueDate: addDays(today, 12), priority: 'high', color: '#3D4A81' },
+    { id: 'epic_board', name: 'Kanban Core', description: 'Boards, columns, drag and drop, task lifecycle.', dueDate: addDays(today, 5), priority: 'high', color: '#FADE7D' },
+    { id: 'epic_time', name: 'Calendar & Time', description: 'Day calendar and time blocking of tracked work.', dueDate: addDays(today, 20), priority: 'medium', color: '#AC90BB' },
+    { id: 'epic_insight', name: 'Analytics', description: 'Sprint retrospectives and productivity reporting.', dueDate: addDays(today, 34), priority: 'low', color: '#589651' },
   ]
 
   const sprints: Sprint[] = [
-    { id: 'sprint_12', name: 'Sprint 12 · Foundations', startDate: addDays(today, -14), endDate: addDays(today, -8), order: 2 },
-    { id: 'sprint_13', name: 'Sprint 13 · Time Blocking', startDate: addDays(today, -2), endDate: addDays(today, 4), order: 1 },
-    { id: 'sprint_14', name: 'Sprint 14 · Polish', startDate: addDays(today, 5), endDate: addDays(today, 11), order: 0 },
+    { id: 'sprint_12', name: 'Sprint 12 · Foundations', startDate: addDays(today, -14), endDate: addDays(today, -8), order: 2, phase: 'archived' },
+    { id: 'sprint_13', name: 'Sprint 13 · Time Blocking', startDate: addDays(today, -2), endDate: addDays(today, 4), order: 1, phase: 'active' },
+    { id: 'sprint_14', name: 'Sprint 14 · Polish', startDate: addDays(today, 5), endDate: addDays(today, 11), order: 0, phase: 'future' },
   ]
 
   type Spec = [title: string, epic: string, sprint: string | null, status: Task['status'], priority: Task['priority'], due: number | null, desc: string]

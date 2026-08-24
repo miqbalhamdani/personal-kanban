@@ -4,7 +4,7 @@
       <DialogHeader>
         <DialogTitle>{{ existing ? 'Edit sprint' : 'New sprint' }}</DialogTitle>
         <DialogDescription>
-          A sprint is active, future or archived purely from these dates.
+          Dates plan the sprint. Starting and ending it happens from the sprint list.
         </DialogDescription>
       </DialogHeader>
 
@@ -28,7 +28,7 @@
 
         <p v-if="rangeError" role="alert" class="text-xs font-medium text-destructive">{{ rangeError }}</p>
         <p v-else class="text-xs text-muted-foreground">
-          {{ length }} days · currently <span class="font-medium capitalize">{{ phase }}</span>
+          {{ length }} days<span v-if="existing"> · currently <span class="font-medium capitalize">{{ existing.phase }}</span></span>
         </p>
       </form>
 
@@ -97,9 +97,6 @@ const rangeError = computed(() =>
       : '',
 )
 const length = computed(() => (rangeError.value ? 0 : diffDays(form.startDate, form.endDate) + 1))
-const phase = computed(() =>
-  rangeError.value ? '—' : store.sprintPhase({ id: 'x', name: '', startDate: form.startDate, endDate: form.endDate }),
-)
 
 watch(sprintId, (value) => {
   if (!value) return

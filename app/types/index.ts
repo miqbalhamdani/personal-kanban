@@ -31,6 +31,8 @@ export interface Sprint {
   endDate: string
   /** Manual position in the Task list's sprint groups; lower comes first. */
   order: number
+  /** Lifecycle, started and ended by hand rather than derived from the dates. Only one sprint is 'active'. */
+  phase: SprintPhase
 }
 
 export interface Epic {

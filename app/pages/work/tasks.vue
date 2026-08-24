@@ -55,22 +55,32 @@
     <div v-if="tab === 'list'" ref="listScroll" class="min-h-0 grow overflow-y-auto p-4 sm:px-6 scroll-thin" @dragover="autoScroll">
       <div class="space-y-3">
         <EmptyState
-          v-if="!filtered.length"
+          v-if="!sprintGroups.length"
           :icon="ListTodo"
           title="No task matches this filter"
-          description="Clear the search, epic, or priority filter to see the rest of the backlog."
+          description="Clear the search, epic, or priority filter to see the rest of the backlog. Work in archived sprints stays on the Sprint page."
         />
 
         <section
-          v-for="group in sprintGroups"
+          v-for="(group, gi) in sprintGroups"
           :key="group.key"
           class="rounded-2xl border bg-card transition-colors duration-150"
-          :class="draggingTask && isOver(`sprint:${group.key}`) && 'border-brand bg-brand-soft/70'"
+          :class="[
+            draggingTask && isOver(`sprint:${group.key}`) && 'border-brand bg-brand-soft/70',
+            isOver(`slot:${group.key}`) && 'border-brand ring-2 ring-brand/25',
+            isDraggingSprint(group.key) && 'opacity-40',
+          ]"
           @dragover="overSection($event, group.key)"
           @dragleave="leaveSection($event, group.key)"
           @drop.prevent="onDropAt(group.key)"
         >
-          <div class="flex min-h-12 items-center gap-2.5 px-4">
+          <div
+            class="flex min-h-12 items-center gap-2.5 px-4"
+            :class="group.key !== 'none' && 'cursor-grab active:cursor-grabbing'"
+            :draggable="group.key !== 'none'"
+            @dragstart="startSprint($event, group.key)"
+            @dragend="end()"
+          >
             <button
               type="button"
               class="flex min-w-0 grow items-center gap-2.5 py-2 text-left"
@@ -108,10 +118,10 @@
                 <DropdownMenuItem @select="editingSprint = group.key">
                   <Pencil class="size-4" /> Edit sprint
                 </DropdownMenuItem>
-                <DropdownMenuItem :disabled="sprintOrderIds[0] === group.key" @select="store.moveSprint(group.key, -1)">
+                <DropdownMenuItem :disabled="gi === 0" @select="moveSprintGroup(gi, -1)">
                   <ArrowUp class="size-4" /> Move up
                 </DropdownMenuItem>
-                <DropdownMenuItem :disabled="sprintOrderIds[sprintOrderIds.length - 1] === group.key" @select="store.moveSprint(group.key, 1)">
+                <DropdownMenuItem :disabled="gi === sprintKeys.length - 1" @select="moveSprintGroup(gi, 1)">
                   <ArrowDown class="size-4" /> Move down
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -200,8 +210,9 @@ const store = useStore()
 const { state } = store
 const dialog = useTaskDialog()
 const actions = useTaskActions()
-const { dragging, over, leave, isOver, end } = useDrag()
+const { dragging, startSprint, over, leave, isOver, end, isDraggingSprint } = useDrag()
 const draggingTask = computed(() => dragging.value?.kind === 'task')
+const draggingSprint = computed(() => dragging.value?.kind === 'sprint')
 
 const views = [
   { id: 'list' as const, label: 'List', icon: ListTodo },
@@ -217,7 +228,6 @@ const collapsed = ref(new Set<string>())
 const PHASE_CLASS: Record<string, string> = {
   active: 'bg-brand-soft text-primary',
   future: 'bg-purple-soft text-accent-foreground',
-  archived: 'bg-muted text-muted-foreground',
 }
 
 const open = computed(() => state.tasks.filter(t => t.status !== 'done' && t.status !== 'cancelled'))
@@ -243,7 +253,10 @@ const byOrder = <T extends { order: number }>(list: T[]) => [...list].sort((a, b
  *  While a task drag is active, every group renders so empty sprints are drop targets. */
 const sprintGroups = computed(() => {
   if (!filtered.value.length && !draggingTask.value) return []
-  const ordered = [...state.sprints].sort((a, b) => a.order - b.order)
+  // Archived sprints are done with: they stay on the Sprint page, out of the planning list.
+  const ordered = [...state.sprints]
+    .filter(s => store.sprintPhase(s) !== 'archived')
+    .sort((a, b) => a.order - b.order)
   const groups = ordered.map(s => ({
     key: s.id,
     title: s.name,
@@ -275,6 +288,7 @@ const dropAnchor = ref<string | null>(null) // 'before:<taskId>' | 'end:<groupKe
 
 /** Row dragover: top half inserts before this task, bottom half before the next (or at the end). */
 function overRow(event: DragEvent, group: { key: string, tasks: Task[] }, i: number) {
+  if (draggingSprint.value) return overSection(event, group.key)
   const el = event.currentTarget as HTMLElement
   const rect = el.getBoundingClientRect()
   const before = event.clientY < rect.top + rect.height / 2 ? group.tasks[i] : group.tasks[i + 1]
@@ -286,6 +300,11 @@ function overRow(event: DragEvent, group: { key: string, tasks: Task[] }, i: num
 /** Section dragover only fires over the header/gaps (rows stop propagation) → plain append. */
 function overSection(event: DragEvent, key: string) {
   dropAnchor.value = null
+  // "No sprint" is a bucket, not a sprint: it has no slot in the manual order.
+  if (draggingSprint.value) {
+    if (key !== 'none' && !isDraggingSprint(key)) over(event, `slot:${key}`)
+    return
+  }
   over(event, `sprint:${key}`)
 }
 
@@ -294,13 +313,14 @@ function leaveSection(event: DragEvent, key: string) {
   if ((event.currentTarget as HTMLElement).contains(event.relatedTarget as Node)) return
   dropAnchor.value = null
   leave(`sprint:${key}`)
+  leave(`slot:${key}`)
 }
 
 /** Nudge the list scroll when dragging near its top/bottom edge; dragover fires continuously. */
 const listScroll = ref<HTMLElement | null>(null)
 function autoScroll(event: DragEvent) {
   const el = listScroll.value
-  if (!el || !draggingTask.value) return
+  if (!el || (!draggingTask.value && !draggingSprint.value)) return
   const { top, bottom } = el.getBoundingClientRect()
   const zone = 48
   if (event.clientY < top + zone) el.scrollTop -= (top + zone - event.clientY) / 3
@@ -312,6 +332,10 @@ function onDropAt(key: string) {
   const anchor = dropAnchor.value
   dropAnchor.value = null
   end()
+  if (payload?.kind === 'sprint') {
+    if (key !== 'none') store.reorderSprint(payload.sprintId, key)
+    return
+  }
   if (payload?.kind !== 'task') return
   const beforeId = anchor?.startsWith('before:') ? anchor.slice(7) : null
   insertTask(payload.taskId, key === 'none' ? null : key, beforeId)
@@ -342,7 +366,14 @@ function insertTask(taskId: string, sprintId: string | null, beforeId: string | 
 
 /* ---- sprint header kebab ---- */
 const editingSprint = ref<string | null>(null)
-const sprintOrderIds = computed(() => [...state.sprints].sort((a, b) => a.order - b.order).map(s => s.id))
+/** Sprint sections in display order; the kebab and its disabled edges follow these, not the global order. */
+const sprintKeys = computed(() => sprintGroups.value.filter(g => g.key !== 'none').map(g => g.key))
+
+function moveSprintGroup(i: number, dir: -1 | 1) {
+  const from = sprintKeys.value[i]
+  const target = sprintKeys.value[i + dir]
+  if (from && target) store.reorderSprint(from, target)
+}
 
 function deleteSprint(key: string) {
   const sp = store.sprint(key)

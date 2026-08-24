@@ -147,7 +147,7 @@ const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(ma
 
 function onGridOver(event: DragEvent) {
   const payload = dragging.value
-  if (!payload) return
+  if (!payload || payload.kind === 'sprint') return
   over(event, dropId.value)
   const at = minutesAt(event)
   if (payload.kind === 'session') {
@@ -168,6 +168,7 @@ function onDrop(event: DragEvent) {
   end()
   if (!payload) return
 
+  if (payload.kind === 'sprint') return
   if (payload.kind === 'task') {
     store.addSession(payload.taskId, props.date, toTime(start), toTime(start + DEFAULT_LENGTH))
   } else {
