@@ -203,7 +203,7 @@ const store = useStore()
 const { state } = store
 const dialog = useTaskDialog()
 
-const editing = ref<string | null>(null)
+const { epicId: editing } = useEpicDialog()
 const expanded = ref(new Set<string>())
 const today = todayISO()
 

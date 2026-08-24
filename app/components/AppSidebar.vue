@@ -49,12 +49,17 @@
         <Settings2 class="size-3.5" />
         Settings
       </Button>
+      <Button variant="ghost" size="sm" class="h-10 w-full justify-start gap-2 text-muted-foreground" @click="helpOpen = true">
+        <Keyboard class="size-3.5" />
+        Shortcuts
+        <kbd class="ml-auto grid size-5 place-items-center rounded border bg-muted font-mono text-[10px] font-semibold">?</kbd>
+      </Button>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { CalendarCheck, GitBranch, Layers, ListTodo, RotateCcw, Settings2 } from '@lucide/vue'
+import { CalendarCheck, GitBranch, Keyboard, Layers, ListTodo, RotateCcw, Settings2 } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'
 import { todayISO } from '~/utils/date'
@@ -63,6 +68,7 @@ const emit = defineEmits<{ navigate: [] }>()
 
 const route = useRoute()
 const settings = useSettingsDialog()
+const { helpOpen } = useShortcuts()
 const { state, clearAll, sprintPhase } = useStore()
 
 const dueSoon = computed(() => {

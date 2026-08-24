@@ -45,6 +45,7 @@
     <!-- Deferred until first open so their chunks (reka dialog, date picker) stay off the first paint. -->
     <LazyTaskPanel v-if="panelUsed" />
     <LazySettingsDialog v-if="settingsUsed" />
+    <LazyShortcutsDialog v-if="helpUsed" />
 
     <!-- Lives here, not in app.vue: only this layout raises toasts, and mounting
          it globally pulled vue-sonner into the landing page's critical path. -->
@@ -63,16 +64,29 @@ const route = useRoute()
 // Latch on first open (instead of v-if on open) so close animations still play.
 const taskDialog = useTaskDialog()
 const settingsDialog = useSettingsDialog()
+const epicDialog = useEpicDialog()
+const sprintDialog = useSprintDialog()
+const { onKey: onShortcutKey, helpOpen } = useShortcuts()
 const panelUsed = ref(false)
 const settingsUsed = ref(false)
+const helpUsed = ref(false)
 watch(taskDialog.open, v => { if (v) panelUsed.value = true })
 watch(settingsDialog.open, v => { if (v) settingsUsed.value = true })
+watch(helpOpen, v => { if (v) helpUsed.value = true })
 
-watch(() => route.fullPath, () => { drawer.value = false })
+// The epic and sprint editors live on their pages; navigating away must not leave one armed.
+watch(() => route.fullPath, () => {
+  drawer.value = false
+  epicDialog.epicId.value = null
+  sprintDialog.sprintId.value = null
+})
 
-// Escape closes the drawer, matching the modal behaviour.
+// Escape closes the drawer, matching the modal behaviour. Same listener runs the shortcuts.
 onMounted(() => {
-  const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') drawer.value = false }
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') drawer.value = false
+    onShortcutKey(e)
+  }
   window.addEventListener('keydown', onKey)
   onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 })
