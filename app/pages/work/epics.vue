@@ -40,7 +40,7 @@
           </div>
         </header>
 
-        <div class="overflow-x-auto scroll-thin">
+        <div ref="scroller" class="overflow-x-auto scroll-thin">
           <div class="min-w-max">
             <!-- Month + day header -->
             <div class="sticky top-0 z-10 flex border-b bg-card">
@@ -209,6 +209,22 @@ const today = todayISO()
 
 const zooms = [{ label: 'Compact', px: 8 }, { label: 'Normal', px: 18 }, { label: 'Wide', px: 30 }]
 const dayPx = ref(18)
+
+/** Open on today rather than on the earliest epic start, and keep today put across zooms.
+ *  Three days of lead clears the sticky epic column; the ref watch covers both the first
+ *  paint and the empty → first-epic case, when the scroller only then exists. */
+const scroller = ref<HTMLElement | null>(null)
+const LEAD_DAYS = 3
+
+function scrollToToday(behavior: ScrollBehavior = 'auto') {
+  const el = scroller.value
+  if (!el) return
+  const left = (diffDays(timeline.value[0]!, today) - LEAD_DAYS) * dayPx.value
+  el.scrollTo({ left: Math.max(0, left), behavior })
+}
+
+watch(scroller, el => el && nextTick(() => scrollToToday()))
+watch(dayPx, () => nextTick(() => scrollToToday('smooth')))
 
 function toggle(id: string) {
   const next = new Set(expanded.value)
