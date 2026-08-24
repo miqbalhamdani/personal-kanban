@@ -4,6 +4,8 @@ Personal kanban and daily planning app — sprints, epics, and a day calendar, a
 
 Built with Nuxt 4 (SSR off) and shadcn-vue.
 
+![Intently's landing page: the headline "You don't need more hours. You need a queue." above a preview of the Today board, with columns for the next four days and a schedule column of time-blocked tasks](docs/screenshot.webp)
+
 ## Features
 
 - **Home** — kanban for the next 4 days plus a today calendar (00:00–23:59); drag a task onto the calendar to schedule when you'll work on it.
