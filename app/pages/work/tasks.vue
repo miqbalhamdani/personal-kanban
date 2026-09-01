@@ -205,6 +205,7 @@ import {
 import { Input } from '~/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { PRIORITIES, PRIORITY_LABEL, PRIORITY_RANK, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
+import { htmlToText } from '~/utils/richtext'
 
 const store = useStore()
 const { state, activeSprint } = store
@@ -238,7 +239,7 @@ const open = computed(() => state.tasks.filter(t => t.status !== 'done' && t.sta
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
   return state.tasks.filter((t) => {
-    if (q && !t.title.toLowerCase().includes(q) && !t.description.toLowerCase().includes(q)) return false
+    if (q && !t.title.toLowerCase().includes(q) && !htmlToText(t.description).toLowerCase().includes(q)) return false
     if (priorityFilter.value !== 'all' && t.priority !== priorityFilter.value) return false
     if (epicFilter.value === 'none') return !t.epicId
     if (epicFilter.value !== 'all') return t.epicId === epicFilter.value

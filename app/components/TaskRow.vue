@@ -22,7 +22,7 @@
           >
             {{ task.title }}
           </p>
-          <p v-if="task.description" class="truncate text-[11px] text-muted-foreground">{{ task.description }}</p>
+          <p v-if="summary" class="truncate text-[11px] text-muted-foreground">{{ summary }}</p>
         </div>
 
         <span v-if="epic" class="hidden shrink-0 items-center gap-1.5 text-[11px] font-medium sm:inline-flex" :style="{ color: epicTextColor(epic.color) }">
@@ -122,6 +122,7 @@ import {
 } from '~/components/ui/dropdown-menu'
 import { fmtDuration, fmtRelativeDay, todayISO } from '~/utils/date'
 import { epicTextColor, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
+import { htmlToText } from '~/utils/richtext'
 
 const props = defineProps<{ task: Task; reorder?: { upDisabled: boolean; downDisabled: boolean } }>()
 const emit = defineEmits<{ moveUp: []; moveDown: [] }>()
@@ -132,6 +133,8 @@ const actions = useTaskActions()
 const { startTask, end, isDraggingTask } = useDrag()
 
 const epic = computed(() => store.epic(props.task.epicId))
+/** Descriptions hold light HTML now; previews show one flat line of it. */
+const summary = computed(() => htmlToText(props.task.description))
 const tracked = computed(() => store.trackedMinutes(props.task))
 const overdue = computed(() =>
   !!props.task.dueDate

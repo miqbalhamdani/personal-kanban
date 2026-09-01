@@ -71,13 +71,13 @@
 
         <!-- Description -->
         <section class="grid gap-2">
-          <Label :for="`${formId}-desc`" class="text-sm font-semibold">Description</Label>
-          <Textarea
+          <!-- Rich text field is a contenteditable, so the label pairs by id, not `for`. -->
+          <Label :id="`${formId}-desc-label`" class="text-sm font-semibold">Description</Label>
+          <RichTextField
             :id="`${formId}-desc`"
             v-model="form.description"
-            rows="3"
+            :labelledby="`${formId}-desc-label`"
             placeholder="Context, links, acceptance criteria…"
-            class="rounded-lg border-0 bg-muted shadow-none focus-visible:ring-2"
           />
         </section>
 
@@ -237,7 +237,6 @@ import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '~/components/ui/sheet'
-import { Textarea } from '~/components/ui/textarea'
 import { todayISO, toMinutes, toTime } from '~/utils/date'
 import { PRIORITIES, PRIORITY_LABEL, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
 import { uid } from '~/utils/seed'
@@ -345,7 +344,7 @@ function save() {
 
   const patch = {
     title: form.title.trim(),
-    description: form.description.trim(),
+    description: form.description,
     status: form.status,
     priority: form.priority,
     dueDate: form.dueDate || null,

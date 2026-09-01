@@ -35,8 +35,8 @@
           {{ task.title }}
         </p>
 
-        <p v-if="task.description" class="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-          {{ task.description }}
+        <p v-if="summary" class="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          {{ summary }}
         </p>
 
         <p
@@ -108,6 +108,7 @@ import {
 } from '~/components/ui/context-menu'
 import { addDays, fmtRelativeDay, todayISO } from '~/utils/date'
 import { epicTint, PRIORITY_LABEL, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
+import { htmlToText } from '~/utils/richtext'
 
 const props = withDefaults(defineProps<{
   task: Task
@@ -120,6 +121,8 @@ const { startTask, end, isDraggingTask } = useDrag()
 
 const today = todayISO()
 const epic = computed(() => store.epic(props.task.epicId))
+/** Descriptions hold light HTML now; previews show one flat line of it. */
+const summary = computed(() => htmlToText(props.task.description))
 const overdue = computed(() =>
   !!props.task.dueDate
   && props.task.dueDate < today

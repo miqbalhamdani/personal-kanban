@@ -91,6 +91,7 @@ import {
 import { Input } from '~/components/ui/input'
 import { fmtMonthDay } from '~/utils/date'
 import { PRIORITY_RANK, STATUS_DOT, STATUS_LABEL } from '~/utils/labels'
+import { htmlToText } from '~/utils/richtext'
 
 const epicId = defineModel<string | null>('epicId', { required: true })
 
@@ -110,7 +111,7 @@ const matches = computed(() => {
   const q = query.value.trim().toLowerCase()
   if (!q) return candidates.value
   return candidates.value.filter(t =>
-    t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q))
+    t.title.toLowerCase().includes(q) || htmlToText(t.description).toLowerCase().includes(q))
 })
 
 // Reset per opening, then park the caret in the filter.
