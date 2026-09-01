@@ -312,7 +312,7 @@ watch(isOpen, (value) => {
       }
     : {
         ...defaults.value,
-        dueDate: defaults.value.dueDate ?? '',
+        dueDate: defaults.value.dueDate ?? todayISO(),
         sprintId: defaults.value.sprintId ?? 'none',
         epicId: defaults.value.epicId ?? 'none',
       })

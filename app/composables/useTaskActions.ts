@@ -42,6 +42,19 @@ export function useTaskActions() {
     })
   }
 
+  /** Bulk-attach tasks to an epic; Undo restores whatever epic each one had. */
+  function assignEpic(taskIds: string[], epicId: string | null) {
+    const previous = taskIds.map(id => ({ id, epicId: store.task(id)?.epicId ?? null }))
+    taskIds.forEach(id => store.updateTask(id, { epicId }))
+    const label = `${taskIds.length} ${taskIds.length === 1 ? 'task' : 'tasks'}`
+    toast.success(epicId ? `${label} added to the epic` : `${label} removed from the epic`, {
+      action: {
+        label: 'Undo',
+        onClick: () => previous.forEach(p => store.updateTask(p.id, { epicId: p.epicId })),
+      },
+    })
+  }
+
   /** First free hour today, so "Schedule today" never stacks two blocks. */
   function nextFreeSlot(date = todayISO()): string {
     const taken = store.sessionsOn(date).map(({ session }) => session)
@@ -54,7 +67,7 @@ export function useTaskActions() {
     return '20:00'
   }
 
-  return { remove, moveTo, schedule, setDueDate, nextFreeSlot, edit: dialog.openEdit }
+  return { remove, moveTo, schedule, setDueDate, assignEpic, nextFreeSlot, edit: dialog.openEdit }
 }
 
 const truncate = (s: string, max = 32) => (s.length > max ? `${s.slice(0, max - 1)}…` : s)
