@@ -29,7 +29,8 @@
         aria-multiline="true"
         :aria-labelledby="labelledby"
         class="min-h-[72px] px-3 py-2 text-sm leading-relaxed outline-none [&_li]:my-0.5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-0 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5"
-        @input="emitValue"
+        @keydown="onKeydown"
+        @input="onInput"
         @blur="emitValue"
         @paste="onPaste"
         @keyup="syncActive"
@@ -84,6 +85,105 @@ function emitValue() {
   model.value = isBlankHtml(html) ? '' : html
 }
 
+/* ---- Markdown shortcuts ----
+ * Typed markers become formatting, the way a note app does it: "- " or "* " starts a
+ * bullet list, "1. " a numbered one, and **text** / *text* / _text_ close into bold or
+ * italic. Nothing is stored as markdown; the marker is deleted and the real command runs.
+ */
+
+/** The text of the current line up to the caret, or null when the caret is not in text. */
+function textBeforeCaret(): { node: Text; text: string } | null {
+  const selection = getSelection()
+  if (!selection?.isCollapsed) return null
+  const node = selection.anchorNode
+  if (!node || node.nodeType !== Node.TEXT_NODE) return null
+  return { node: node as Text, text: (node.textContent ?? '').slice(0, selection.anchorOffset) }
+}
+
+/** Select the last `length` characters before the caret and drop them. */
+function deleteBeforeCaret(node: Text, caret: number, length: number) {
+  const range = document.createRange()
+  range.setStart(node, caret - length)
+  range.setEnd(node, caret)
+  const selection = getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+  document.execCommand('delete')
+}
+
+const LIST_MARKER = /^\s*([-*]|\d+[.)])$/
+
+/**
+ * Remove the markdown marker left at the head of the fresh list item and put the caret
+ * where the text will go. Plain DOM: execCommand('delete') needs a caret that survives
+ * the list command, and it does not.
+ */
+function stripLeadingMarker() {
+  const selection = getSelection()
+  const item = (selection?.anchorNode as Node | null)?.parentElement?.closest('li')
+    ?? (selection?.anchorNode as Element | null)?.closest?.('li')
+  const node = item?.firstChild
+  if (!node || node.nodeType !== Node.TEXT_NODE) return
+  const text = node as Text
+  const match = /^\s*([-*]|\d+[.)])\s?/.exec(text.data)
+  if (!match) return
+  text.deleteData(0, match[0].length)
+  const range = document.createRange()
+  range.setStart(text, 0)
+  range.collapse(true)
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+}
+
+/** Space is the trigger for list markers, so it has to be caught before it is typed. */
+function onKeydown(event: KeyboardEvent) {
+  if (event.key !== ' ' || event.isComposing) return
+  const at = textBeforeCaret()
+  if (!at) return
+  // The marker must be the whole line so far, and we must not already be in a list.
+  if (at.node.previousSibling || !LIST_MARKER.test(at.text)) return
+  if (at.node.parentElement?.closest('li')) return
+
+  event.preventDefault()
+  const bullet = /^[-*]$/.test(at.text.trim())
+  // List first, marker second: deleting the marker up front empties the line and the
+  // caret loses the node the list command needs. The list command also parks the caret
+  // before the marker, so strip it off the front of the new item.
+  document.execCommand(bullet ? 'insertUnorderedList' : 'insertOrderedList')
+  stripLeadingMarker()
+  emitValue()
+  syncActive()
+}
+
+const INLINE_RULES = [
+  { re: /\*\*([^*\s](?:[^*]*[^*\s])?)\*\*$/, command: 'bold' },
+  // Lookbehind so the first closing * of a **pair** is not read as italic.
+  { re: /(?<![*\w])\*([^*\s](?:[^*]*[^*\s])?)\*$/, command: 'italic' },
+  { re: /(?<![_\w])_([^_\s](?:[^_]*[^_\s])?)_$/, command: 'italic' },
+] as const
+
+/** Runs after the closing marker is typed, so the pair is complete. */
+function applyInlineRule(): boolean {
+  const at = textBeforeCaret()
+  if (!at) return false
+  for (const rule of INLINE_RULES) {
+    const match = rule.re.exec(at.text)
+    if (!match) continue
+    deleteBeforeCaret(at.node, at.text.length, match[0].length)
+    document.execCommand(rule.command)
+    document.execCommand('insertText', false, match[1]!)
+    document.execCommand(rule.command)
+    return true
+  }
+  return false
+}
+
+function onInput(event: Event) {
+  const data = (event as InputEvent).data
+  if ((data === '*' || data === '_') && applyInlineRule()) syncActive()
+  emitValue()
+}
+
 /** Paste as plain text: nothing foreign — markup, styles, trackers — gets in. */
 function onPaste(event: ClipboardEvent) {
   event.preventDefault()
@@ -100,7 +200,12 @@ function render() {
   const el = editor.value
   if (!el) return
   const next = model.value || ''
-  if (sanitizeHtml(el.innerHTML) !== next) el.innerHTML = next
+  const current = sanitizeHtml(el.innerHTML)
+  if (current === next) return
+  // A fresh empty list reads as blank, and the model stores '' for blank. Rewriting the
+  // DOM here would delete the list the user just started.
+  if (!next && isBlankHtml(current)) return
+  el.innerHTML = next
 }
 
 onMounted(render)
