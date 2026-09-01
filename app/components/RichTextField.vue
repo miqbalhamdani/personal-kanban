@@ -7,14 +7,14 @@
     >
       <button
         v-for="tool in TOOLS"
-        :key="tool.command"
+        :key="tool.key"
         type="button"
         class="grid size-8 place-items-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-background hover:text-foreground aria-pressed:bg-background aria-pressed:text-primary"
-        :aria-pressed="active.includes(tool.command)"
+        :aria-pressed="active.includes(tool.key)"
         :aria-label="tool.label"
         :title="`${tool.label}${tool.hint ? ` (${tool.hint})` : ''}`"
         @mousedown.prevent
-        @click="run(tool.command)"
+        @click="run(tool.key)"
       >
         <component :is="tool.icon" class="size-4" aria-hidden="true" />
       </button>
@@ -28,7 +28,7 @@
         role="textbox"
         aria-multiline="true"
         :aria-labelledby="labelledby"
-        class="min-h-[72px] px-3 py-2 text-sm leading-relaxed outline-none [&_li]:my-0.5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-0 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5"
+        class="min-h-[72px] px-3 py-2 text-sm leading-relaxed outline-none [&_code]:rounded [&_code]:bg-background [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[12px] [&_li]:my-0.5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-0 [&_pre]:my-1 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-background [&_pre]:p-2 [&_pre]:font-mono [&_pre]:text-[12px] [&_pre]:whitespace-pre-wrap [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5"
         @keydown="onKeydown"
         @input="onInput"
         @blur="emitValue"
@@ -49,35 +49,65 @@
 </template>
 
 <script setup lang="ts">
-import { Bold, Italic, List, ListOrdered } from '@lucide/vue'
+import { Bold, Code, Italic, List, ListOrdered } from '@lucide/vue'
 import { isBlankHtml, sanitizeHtml } from '~/utils/richtext'
 
 defineProps<{ id?: string; labelledby?: string; placeholder?: string }>()
 const model = defineModel<string>({ required: true })
 
 const TOOLS = [
-  { command: 'bold', label: 'Bold', hint: '⌘B', icon: Bold },
-  { command: 'italic', label: 'Italic', hint: '⌘I', icon: Italic },
-  { command: 'insertUnorderedList', label: 'Bullet list', hint: '', icon: List },
-  { command: 'insertOrderedList', label: 'Numbered list', hint: '', icon: ListOrdered },
+  { key: 'bold', label: 'Bold', hint: '⌘B', icon: Bold },
+  { key: 'italic', label: 'Italic', hint: '⌘I', icon: Italic },
+  { key: 'code', label: 'Code', hint: '`code`', icon: Code },
+  { key: 'insertUnorderedList', label: 'Bullet list', hint: '- ', icon: List },
+  { key: 'insertOrderedList', label: 'Numbered list', hint: '1. ', icon: ListOrdered },
 ] as const
 
 const editor = ref<HTMLElement | null>(null)
 const active = ref<string[]>([])
 
 // ponytail: execCommand is deprecated but is still the only zero-dependency way
-// to do this; swap in an editor library only if we outgrow these four buttons.
-function run(command: string) {
-  editor.value?.focus()
-  document.execCommand(command)
+// to do this; swap in an editor library only if we outgrow this toolbar.
+function run(key: string) {
+  // Only focus when we are not already there: focusing collapses an existing selection,
+  // which is exactly what the code button needs to wrap.
+  if (document.activeElement !== editor.value) editor.value?.focus()
+  if (key === 'code') toggleCode()
+  else document.execCommand(key)
   emitValue()
   syncActive()
 }
 
+/** The <code> or <pre> the caret sits in, if any. */
+function codeAtCaret(): HTMLElement | null {
+  const node = getSelection()?.anchorNode
+  const el = node?.nodeType === Node.TEXT_NODE ? node.parentElement : (node as Element | null)
+  return (el?.closest('code, pre') as HTMLElement | null) ?? null
+}
+
+/**
+ * execCommand has no code command, and its insertHTML rewrites a <code> into a styled
+ * <span>, so the chip is built by hand. Clicking inside an existing chip unwraps it.
+ */
+function toggleCode() {
+  const existing = codeAtCaret()
+  if (existing) {
+    existing.replaceWith(...existing.childNodes)
+    return
+  }
+  const selection = getSelection()
+  const selected = selection?.toString() ?? ''
+  if (!selected) return
+  selection?.getRangeAt(0).deleteContents()
+  insertCodeChip(selected)
+}
+
 function syncActive() {
-  active.value = TOOLS.filter((t) => {
-    try { return document.queryCommandState(t.command) } catch { return false }
-  }).map(t => t.command)
+  const on = TOOLS.filter((t) => {
+    if (t.key === 'code') return !!codeAtCaret()
+    try { return document.queryCommandState(t.key) } catch { return false }
+  }).map(t => t.key)
+  active.value = on
 }
 
 function emitValue() {
@@ -87,8 +117,9 @@ function emitValue() {
 
 /* ---- Markdown shortcuts ----
  * Typed markers become formatting, the way a note app does it: "- " or "* " starts a
- * bullet list, "1. " a numbered one, and **text** / *text* / _text_ close into bold or
- * italic. Nothing is stored as markdown; the marker is deleted and the real command runs.
+ * bullet list, "1. " a numbered one, "``` " a code block, and **text** / *text* / _text_ /
+ * `text` close into bold, italic or inline code. Nothing is stored as markdown: the marker
+ * is deleted and the real command runs.
  */
 
 /** The text of the current line up to the caret, or null when the caret is not in text. */
@@ -112,20 +143,22 @@ function deleteBeforeCaret(node: Text, caret: number, length: number) {
 }
 
 const LIST_MARKER = /^\s*([-*]|\d+[.)])$/
+const FENCE_MARKER = /^\s*```$/
 
 /**
  * Remove the markdown marker left at the head of the fresh list item and put the caret
  * where the text will go. Plain DOM: execCommand('delete') needs a caret that survives
  * the list command, and it does not.
  */
-function stripLeadingMarker() {
+function stripLeadingMarker(block: 'li' | 'pre' = 'li') {
   const selection = getSelection()
-  const item = (selection?.anchorNode as Node | null)?.parentElement?.closest('li')
-    ?? (selection?.anchorNode as Element | null)?.closest?.('li')
-  const node = item?.firstChild
-  if (!node || node.nodeType !== Node.TEXT_NODE) return
-  const text = node as Text
-  const match = /^\s*([-*]|\d+[.)])\s?/.exec(text.data)
+  const anchor = selection?.anchorNode as Node | null
+  const item = anchor?.parentElement?.closest(block)
+    ?? (anchor as Element | null)?.closest?.(block)
+  // First text node, not firstChild: the marker can sit inside a leftover inline wrapper.
+  const text = item && document.createTreeWalker(item, NodeFilter.SHOW_TEXT).nextNode() as Text | null
+  if (!text) return
+  const match = /^\s*(```|[-*]|\d+[.)])\s?/.exec(text.data)
   if (!match) return
   text.deleteData(0, match[0].length)
   const range = document.createRange()
@@ -135,13 +168,26 @@ function stripLeadingMarker() {
   selection?.addRange(range)
 }
 
-/** Space is the trigger for list markers, so it has to be caught before it is typed. */
+/** Space is the trigger for line markers, so it has to be caught before it is typed. */
 function onKeydown(event: KeyboardEvent) {
   if (event.key !== ' ' || event.isComposing) return
   const at = textBeforeCaret()
   if (!at) return
-  // The marker must be the whole line so far, and we must not already be in a list.
-  if (at.node.previousSibling || !LIST_MARKER.test(at.text)) return
+  // The marker must be the whole line so far, and must not already be inside what it makes.
+  if (at.node.previousSibling) return
+  if (codeAtCaret()) return
+
+  if (FENCE_MARKER.test(at.text)) {
+    event.preventDefault()
+    // formatBlock keeps the caret in the new <pre>; the marker text comes along, so drop it.
+    document.execCommand('formatBlock', false, 'pre')
+    stripLeadingMarker('pre')
+    emitValue()
+    syncActive()
+    return
+  }
+
+  if (!LIST_MARKER.test(at.text)) return
   if (at.node.parentElement?.closest('li')) return
 
   event.preventDefault()
@@ -160,6 +206,7 @@ const INLINE_RULES = [
   // Lookbehind so the first closing * of a **pair** is not read as italic.
   { re: /(?<![*\w])\*([^*\s](?:[^*]*[^*\s])?)\*$/, command: 'italic' },
   { re: /(?<![_\w])_([^_\s](?:[^_]*[^_\s])?)_$/, command: 'italic' },
+  { re: /(?<!`)`([^`\n]+)`$/, command: 'code' },
 ] as const
 
 /** Runs after the closing marker is typed, so the pair is complete. */
@@ -170,17 +217,43 @@ function applyInlineRule(): boolean {
     const match = rule.re.exec(at.text)
     if (!match) continue
     deleteBeforeCaret(at.node, at.text.length, match[0].length)
-    document.execCommand(rule.command)
-    document.execCommand('insertText', false, match[1]!)
-    document.execCommand(rule.command)
+    if (rule.command === 'code') {
+      insertCodeChip(match[1]!)
+    } else {
+      document.execCommand(rule.command)
+      document.execCommand('insertText', false, match[1]!)
+      document.execCommand(rule.command)
+    }
     return true
   }
   return false
 }
 
+/**
+ * Built by hand rather than with insertHTML: the caret has to end up in a text node that
+ * sits *outside* the chip, or everything typed next keeps joining the code.
+ */
+function insertCodeChip(code: string) {
+  const selection = getSelection()
+  const range = selection?.getRangeAt(0)
+  if (!range) return
+  const chip = document.createElement('code')
+  chip.textContent = code
+  range.insertNode(chip)
+  // A zero-width space, not an empty node: browsers will not hold a caret in an empty
+  // text node, and sanitizeHtml strips these back out before anything is stored.
+  const tail = document.createTextNode('\u200B')
+  chip.after(tail)
+  const after = document.createRange()
+  after.setStart(tail, 1)
+  after.collapse(true)
+  selection?.removeAllRanges()
+  selection?.addRange(after)
+}
+
 function onInput(event: Event) {
   const data = (event as InputEvent).data
-  if ((data === '*' || data === '_') && applyInlineRule()) syncActive()
+  if ((data === '*' || data === '_' || data === '`') && applyInlineRule()) syncActive()
   emitValue()
 }
 

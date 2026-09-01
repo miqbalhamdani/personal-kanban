@@ -4,7 +4,9 @@
  * back to text for previews and search.
  */
 
-const ALLOWED = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'P', 'DIV', 'BR', 'UL', 'OL', 'LI'])
+const ALLOWED = new Set([
+  'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'P', 'DIV', 'BR', 'UL', 'OL', 'LI', 'CODE', 'PRE',
+])
 
 /**
  * Allowlist walk: an unknown element is unwrapped (its text survives) and every
@@ -25,7 +27,9 @@ export function sanitizeHtml(html: string): string {
     }
   }
   walk(host)
-  return host.innerHTML
+  // The editor parks zero-width spaces next to inline code so the caret has somewhere
+  // outside the chip to sit; they are a caret aid, never content.
+  return host.innerHTML.replace(/\u200B/g, '')
 }
 
 /** Flatten to one line of text. Display and search only — never a security boundary. */
@@ -34,7 +38,7 @@ export function htmlToText(value: string): string {
   return value
     // Both ends of a block tag: without the opening one, "…italic" and a following
     // list item would run together as "italicfirst".
-    .replace(/<\/?(p|div|li|ul|ol)[^>]*>|<br\s*\/?>/gi, ' ')
+    .replace(/<\/?(p|div|li|ul|ol|pre)[^>]*>|<br\s*\/?>/gi, ' ')
     .replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
     .replace(/&lt;/g, '<')
@@ -42,6 +46,7 @@ export function htmlToText(value: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
+    .replace(/\u200B/g, '')
     .replace(/\s+/g, ' ')
     .trim()
 }
