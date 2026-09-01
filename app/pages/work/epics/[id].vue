@@ -29,6 +29,9 @@
         <Button variant="outline" class="gap-1.5" @click="editing = epic.id">
           <Pencil class="size-3.5" /> Edit
         </Button>
+        <Button variant="outline" class="gap-1.5" @click="picking = epic.id">
+          <ListPlus class="size-4" /> Add existing
+        </Button>
         <Button class="gap-1.5" @click="newTask">
           <Plus class="size-4" /> New task
         </Button>
@@ -45,11 +48,16 @@
         v-if="!epicTasks.length"
         :icon="ListTodo"
         title="No task in this epic yet"
-        description="Add one here, or assign existing tasks from the Task page."
+        description="Create one here, or pull in tasks that do not belong to an epic yet."
       >
-        <Button class="gap-1.5" @click="newTask">
-          <Plus class="size-4" /> New task
-        </Button>
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <Button class="gap-1.5" @click="newTask">
+            <Plus class="size-4" /> New task
+          </Button>
+          <Button variant="outline" class="gap-1.5" @click="picking = epic.id">
+            <ListPlus class="size-4" /> Add existing task
+          </Button>
+        </div>
       </EmptyState>
 
       <!-- Same anatomy as the sprint detail list: one collapsible section per status. -->
@@ -81,11 +89,12 @@
     </div>
 
     <EpicDialog v-model:epic-id="editing" />
+    <EpicTaskPicker v-model:epic-id="picking" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ChevronRight, Layers, ListTodo, Pencil, Plus } from '@lucide/vue'
+import { ChevronRight, Layers, ListPlus, ListTodo, Pencil, Plus } from '@lucide/vue'
 import { Button } from '~/components/ui/button'
 import { fmtDuration, fmtMonthDay } from '~/utils/date'
 import { PRIORITY_LABEL, PRIORITY_RANK, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
@@ -99,6 +108,7 @@ const epic = computed(() => store.epic(String(route.params.id)))
 const epicTasks = computed(() => state.tasks.filter(t => t.epicId === epic.value?.id))
 
 const { epicId: editing } = useEpicDialog()
+const picking = ref<string | null>(null)
 
 /** Either end of the window can be open, so all four shapes need a reading. */
 const dateLabel = computed(() => {

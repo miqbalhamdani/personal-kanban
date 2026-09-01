@@ -78,9 +78,10 @@ const open = computed(() => state.tasks.filter(t => t.status !== 'done' && t.sta
 const byPriorityThenOrder = (a: { priority: keyof typeof PRIORITY_RANK; order: number }, b: typeof a) =>
   PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order
 
+// `open`, not every task: a finished card is not work for today.
 const days = computed(() => window4.map(date => ({
   date,
-  tasks: state.tasks.filter(t => t.dueDate === date).sort(byPriorityThenOrder),
+  tasks: open.value.filter(t => t.dueDate === date).sort(byPriorityThenOrder),
 })))
 
 const overdue = computed(() => open.value.filter(t => t.dueDate && t.dueDate < today))
