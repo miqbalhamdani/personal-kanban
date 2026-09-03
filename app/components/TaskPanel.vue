@@ -310,9 +310,10 @@ watch(isOpen, (value) => {
         epicId: t.epicId ?? 'none',
       }
     : {
+        // A new task lands on today, in the running sprint, unless the caller says otherwise.
         ...defaults.value,
         dueDate: defaults.value.dueDate ?? todayISO(),
-        sprintId: defaults.value.sprintId ?? 'none',
+        sprintId: defaults.value.sprintId ?? store.activeSprint.value?.id ?? 'none',
         epicId: defaults.value.epicId ?? 'none',
       })
   sessions.value = (t?.sessions ?? []).map(s => ({ ...s }))
