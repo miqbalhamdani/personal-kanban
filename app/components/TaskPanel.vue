@@ -310,12 +310,14 @@ watch(isOpen, (value) => {
         epicId: t.epicId ?? 'none',
       }
     : {
+        // A new task lands on today, in the running sprint, unless the caller says otherwise.
         ...defaults.value,
         dueDate: defaults.value.dueDate ?? todayISO(),
-        sprintId: defaults.value.sprintId ?? 'none',
+        sprintId: defaults.value.sprintId ?? store.activeSprint.value?.id ?? 'none',
         epicId: defaults.value.epicId ?? 'none',
       })
-  sessions.value = (t?.sessions ?? []).map(s => ({ ...s }))
+  // `defaults.sessions` is how the day calendar hands over a dragged-out time range.
+  sessions.value = (t?.sessions ?? defaults.value.sessions ?? []).map(s => ({ ...s }))
   snapshot.value = fingerprint()
   nextTick(() => {
     const el = titleInput.value?.$el as HTMLInputElement | undefined

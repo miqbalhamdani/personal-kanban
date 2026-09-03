@@ -180,7 +180,7 @@
         :dot="STATUS_DOT[status]"
         addable
         :empty-text="`Nothing in ${STATUS_LABEL[status].toLowerCase()}.`"
-        @add="dialog.openNew({ status, sprintId: activeSprint?.id })"
+        @add="dialog.openNew({ status })"
         @drop-task="id => onDropOnStatus(id, status)"
       />
     </div>
