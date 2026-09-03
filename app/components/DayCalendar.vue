@@ -130,6 +130,10 @@ onMounted(() => {
 })
 onBeforeUnmount(() => clearInterval(ticker))
 
+// Everything else derives from the date prop, but the scroller keeps its old offset:
+// re-anchor it (now for today, 08:00 otherwise) whenever the page steps to another day.
+watch(() => props.date, () => nextTick(() => scrollToNow('auto')))
+
 function scrollToNow(behavior: ScrollBehavior = 'smooth') {
   const target = isToday.value ? Math.max(0, nowMinutes.value - 90) : 8 * 60
   scroller.value?.scrollTo({ top: target * PX_PER_MIN, behavior })
