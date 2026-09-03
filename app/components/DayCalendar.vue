@@ -11,8 +11,9 @@
     </header>
 
     <p class="border-b bg-muted/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-      Drag a task in to plan when you will work on it. Drag a block to move it, its bottom
-      edge to resize, or focus one and use the arrow keys.
+      Drag a task in to plan when you will work on it, or drag an empty slot to block out
+      something new. Drag a block to move it, its bottom edge to resize, or focus one and use
+      the arrow keys.
     </p>
 
     <div ref="scroller" class="relative min-h-0 grow overflow-y-auto scroll-thin">
@@ -32,8 +33,9 @@
         <!-- Slot grid + blocks -->
         <div
           ref="grid"
-          class="relative grow"
+          class="relative grow select-none"
           :style="{ height: `${24 * HOUR_PX}px` }"
+          @pointerdown="startSelect"
           @dragover="onGridOver"
           @dragleave="leave(dropId)"
           @drop.prevent="onDrop"
@@ -46,13 +48,15 @@
             :style="{ height: `${HOUR_PX / 2}px` }"
           />
 
-          <!-- Snap preview while dragging -->
+          <!-- Snap preview: a card being dropped in, or a range being dragged out -->
           <div
-            v-if="ghost !== null"
+            v-if="preview"
             class="pointer-events-none absolute inset-x-1 z-10 rounded-lg border-2 border-dashed border-brand bg-brand-soft/80"
-            :style="{ top: `${ghost * PX_PER_MIN}px`, height: `${ghostLength * PX_PER_MIN}px` }"
+            :style="{ top: `${preview.top * PX_PER_MIN}px`, height: `${preview.length * PX_PER_MIN}px` }"
           >
-            <span class="tnum px-2 text-[11px] font-semibold leading-6 text-primary">{{ toTime(ghost) }}</span>
+            <span class="tnum px-2 text-[11px] font-semibold leading-6 text-primary">
+              {{ toTime(preview.top) }}–{{ endTime(preview.top + preview.length) }}
+            </span>
           </div>
 
           <!-- Current time marker -->
@@ -93,6 +97,7 @@
 import { Crosshair } from '@lucide/vue'
 import { Button } from '~/components/ui/button'
 import { fmtDayMonth, fmtRelativeDay, todayISO, toMinutes, toTime } from '~/utils/date'
+import { uid } from '~/utils/seed'
 
 const props = defineProps<{ date: string }>()
 
@@ -103,6 +108,7 @@ const MIN_LENGTH = 15
 const DEFAULT_LENGTH = 60
 
 const store = useStore()
+const dialog = useTaskDialog()
 const { dragging, over, leave, end } = useDrag()
 
 const dropId = computed(() => `calendar:${props.date}`)
@@ -110,6 +116,15 @@ const scroller = ref<HTMLElement | null>(null)
 const grid = ref<HTMLElement | null>(null)
 const ghost = ref<number | null>(null)
 const ghostLength = ref(DEFAULT_LENGTH)
+/** Its own ref, not `ghost`: the dragging watcher below nulls that one out mid-gesture. */
+const selection = ref<{ start: number; end: number } | null>(null)
+
+/** One dashed box serves both jobs — dropping a card in, and dragging a range out. */
+const preview = computed(() => {
+  if (selection.value) return { top: selection.value.start, length: selection.value.end - selection.value.start }
+  if (ghost.value !== null) return { top: ghost.value, length: ghostLength.value }
+  return null
+})
 
 const blocks = computed(() => store.sessionsOn(props.date))
 
@@ -141,13 +156,64 @@ function scrollToNow(behavior: ScrollBehavior = 'smooth') {
 
 const snap = (minutes: number) => Math.round(minutes / SNAP) * SNAP
 
-function minutesAt(event: DragEvent): number {
+function minutesAt(event: { clientY: number }): number {
   const rect = grid.value?.getBoundingClientRect()
   if (!rect) return 0
   return clamp(snap((event.clientY - rect.top) / PX_PER_MIN), 0, 24 * 60 - MIN_LENGTH)
 }
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n))
+
+/** toTime wraps 1440 back to 00:00, which would leave a block ending before it starts. */
+const endTime = (minutes: number) => (minutes >= 24 * 60 ? '23:59' : toTime(minutes))
+
+/**
+ * Drag over empty grid to block out something new: the release opens the task panel with the
+ * range already seeded, so a stray drag stores nothing. Same window-listener shape as
+ * CalendarBlock's resize grip.
+ */
+function startSelect(event: PointerEvent) {
+  // Right-click belongs to the block context menu, touch belongs to the scroller, and a press
+  // on a block belongs to that block — its pointerdown bubbles up here.
+  if (event.button !== 0 || event.pointerType === 'touch') return
+  if ((event.target as HTMLElement).closest('[draggable="true"]')) return
+  // Only now: preventing earlier would kill a block's native dragstart.
+  event.preventDefault()
+
+  const anchor = minutesAt(event)
+  let moved = false
+
+  const move = (e: PointerEvent) => {
+    const at = minutesAt(e)
+    if (at === anchor && !moved) return
+    moved = true
+    selection.value = {
+      start: Math.min(anchor, at),
+      end: Math.max(Math.max(anchor, at), Math.min(anchor, at) + MIN_LENGTH),
+    }
+  }
+
+  const up = () => {
+    window.removeEventListener('pointermove', move)
+    window.removeEventListener('pointerup', up)
+    // A click with no drag gets the same hour a dropped card would.
+    const range = selection.value ?? { start: anchor, end: anchor + DEFAULT_LENGTH }
+    selection.value = null
+    createAt(range.start, Math.min(range.end, 24 * 60))
+  }
+
+  window.addEventListener('pointermove', move)
+  window.addEventListener('pointerup', up)
+}
+
+/** The panel fills in the rest: today's date is this day, and the sprint is the running one. */
+function createAt(start: number, end: number) {
+  dialog.openNew({
+    dueDate: props.date,
+    status: 'todo',
+    sessions: [{ id: uid('ses'), date: props.date, start: toTime(start), end: endTime(end) }],
+  })
+}
 
 function onGridOver(event: DragEvent) {
   const payload = dragging.value
@@ -201,6 +267,6 @@ function nudge(block: Block, deltaMinutes: number) {
 function resize(block: Block, deltaMinutes: number) {
   const start = toMinutes(block.session.start)
   const end = clamp(snap(toMinutes(block.session.end) + deltaMinutes), start + MIN_LENGTH, 24 * 60)
-  store.updateSession(block.task.id, block.session.id, { end: toTime(end) })
+  store.updateSession(block.task.id, block.session.id, { end: endTime(end) })
 }
 </script>
