@@ -31,6 +31,15 @@
         </span>
 
         <span
+          v-if="checklist.total"
+          class="tnum hidden shrink-0 items-center gap-1 text-[11px] sm:inline-flex"
+          :class="checklist.complete ? 'text-primary' : 'text-muted-foreground'"
+          :title="`${checklist.done} of ${checklist.total} checklist items done`"
+        >
+          <ListChecks class="size-3" aria-hidden="true" />{{ checklist.done }}/{{ checklist.total }}
+        </span>
+
+        <span
           v-if="tracked"
           class="tnum hidden shrink-0 text-[11px] text-muted-foreground md:inline"
           :title="`${fmtDuration(tracked)} tracked`"
@@ -111,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, Clock, MoreHorizontal, MoveRight, Pencil, Trash2 } from '@lucide/vue'
+import { ArrowDown, ArrowUp, Clock, ListChecks, MoreHorizontal, MoveRight, Pencil, Trash2 } from '@lucide/vue'
 import type { Task } from '~/types'
 import {
   ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator,
@@ -136,6 +145,11 @@ const epic = computed(() => store.epic(props.task.epicId))
 /** Descriptions hold light HTML now; previews show one flat line of it. */
 const summary = computed(() => htmlToText(props.task.description))
 const tracked = computed(() => store.trackedMinutes(props.task))
+const checklist = computed(() => {
+  const total = props.task.checklist.length
+  const done = props.task.checklist.filter(c => c.done).length
+  return { total, done, complete: total > 0 && done === total }
+})
 const overdue = computed(() =>
   !!props.task.dueDate
   && props.task.dueDate < todayISO()

@@ -68,6 +68,7 @@ export function seedState(): StoreState {
     epicId,
     status,
     sessions: [],
+    checklist: [],
     order: i,
     createdAt: Date.now() - (specs.length - i) * 3_600_000,
   }))
@@ -90,6 +91,18 @@ export function seedState(): StoreState {
       start += length + 30
     }
   })
+
+  // A few checklists, spanning untouched / partly done / complete so the card chip
+  // has all of its states on a fresh install.
+  const check = (title: string, done: number, ...steps: string[]) => {
+    byTitle(title).checklist = steps.map((text, i) => ({ id: uid('chk'), text, done: i < done }))
+  }
+
+  check('Local persistence layer', 3, 'Debounce the writes', 'Version the storage key', 'Fall back on a corrupt blob')
+  check('Drag a task onto a time slot', 1, 'Round the drop to the quarter hour', 'Ghost preview while dragging', 'Undo the block after a drop')
+  check('Resize a scheduled block', 3, 'Grab handle on the bottom edge', 'Snap to fifteen minutes', 'Clamp at the day boundary')
+  check('Four day focus board', 1, 'Group tasks by due date', 'Empty state per day column', 'Walk to any day, not just today')
+  check('Keyboard path for every drag', 0, 'Move to, in the context menu', 'Schedule today', 'Reorder within a column')
 
   // A partly planned day today, so the focus calendar opens with content.
   byTitle('Drag a task onto a time slot').sessions.push({ id: uid('ses'), date: today, start: '09:30', end: '11:00' })
