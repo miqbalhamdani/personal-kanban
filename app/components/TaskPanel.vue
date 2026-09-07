@@ -81,6 +81,71 @@
           />
         </section>
 
+        <!-- Checklist: steps too small to deserve their own task -->
+        <section class="rounded-xl border border-border/60">
+          <div class="flex items-center gap-3 border-b border-border/60 px-3 py-2.5">
+            <h3 :id="`${formId}-check-label`" class="grow text-sm font-semibold">Checklist</h3>
+            <template v-if="checklist.length">
+              <span class="tnum text-[11px] font-medium text-muted-foreground">{{ doneCount }}/{{ checklist.length }} done</span>
+              <div
+                class="h-1.5 w-16 overflow-hidden rounded-full bg-muted"
+                role="progressbar"
+                :aria-valuenow="doneCount"
+                aria-valuemin="0"
+                :aria-valuemax="checklist.length"
+                :aria-labelledby="`${formId}-check-label`"
+              >
+                <div class="h-full rounded-full bg-primary transition-[width] duration-200" :style="{ width: `${progress}%` }" />
+              </div>
+            </template>
+          </div>
+          <div class="grid gap-2 p-4">
+            <p v-if="!checklist.length" class="text-xs leading-relaxed text-muted-foreground">
+              Nothing to check off yet. Break the task into steps below.
+            </p>
+
+            <!-- Rows are borderless: the checkbox and the text read as one line, and the
+                 44px-tall label keeps the tap target honest without inflating the row. -->
+            <ul v-else class="grid">
+              <li v-for="(item, i) in checklist" :key="item.id" class="flex items-center">
+                <label class="flex h-11 w-9 shrink-0 cursor-pointer items-center">
+                  <input
+                    v-model="item.done"
+                    type="checkbox"
+                    class="size-4 cursor-pointer accent-primary"
+                    :aria-label="item.text.trim() ? `Done: ${item.text.trim()}` : `Done: checklist item ${i + 1}`"
+                  >
+                </label>
+                <input
+                  :id="`${formId}-item-${item.id}`"
+                  v-model="item.text"
+                  maxlength="140"
+                  placeholder="Describe a step"
+                  class="min-w-0 grow rounded-md bg-transparent px-2 py-2 text-sm outline-none transition-colors duration-150 placeholder:text-muted-foreground/70 hover:bg-muted/50 focus:bg-muted/60"
+                  :class="item.done && 'text-muted-foreground line-through decoration-muted-foreground'"
+                  :aria-label="`Checklist item ${i + 1}`"
+                  @keydown.enter.prevent="addItem(i + 1)"
+                  @keydown.backspace="onItemBackspace($event, i)"
+                >
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  class="size-9 shrink-0 text-muted-foreground hover:text-destructive"
+                  :aria-label="`Remove checklist item ${i + 1}`"
+                  @click="removeItem(i)"
+                >
+                  <Trash2 class="size-4" />
+                </Button>
+              </li>
+            </ul>
+
+            <Button type="button" variant="outline" size="sm" class="justify-self-start gap-1.5" @click="addItem(checklist.length)">
+              <Plus class="size-3.5" /> Add item
+            </Button>
+          </div>
+        </section>
+
         <!-- Detail information -->
         <section class="rounded-xl border border-border/60">
           <h3 class="border-b border-border/60 px-3 py-2.5 text-sm font-semibold">Detail information</h3>
@@ -231,7 +296,7 @@
 <script setup lang="ts">
 import { Plus, Trash2 } from '@lucide/vue'
 import { toast } from 'vue-sonner'
-import type { Priority, Session, Sprint, Status } from '~/types'
+import type { ChecklistItem, Priority, Session, Sprint, Status } from '~/types'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
@@ -280,6 +345,7 @@ const blank = () => ({
 
 const form = reactive(blank())
 const sessions = ref<Session[]>([])
+const checklist = ref<ChecklistItem[]>([])
 const touched = reactive({ title: false })
 const snapshot = ref('')
 const confirming = ref(false)
@@ -291,7 +357,10 @@ const sessionError = computed(() =>
     : '',
 )
 
-const fingerprint = () => JSON.stringify([form, sessions.value])
+const doneCount = computed(() => checklist.value.filter(c => c.done).length)
+const progress = computed(() => (checklist.value.length ? Math.round((doneCount.value / checklist.value.length) * 100) : 0))
+
+const fingerprint = () => JSON.stringify([form, sessions.value, checklist.value])
 
 // Load the form whenever the panel opens, and snapshot it for the dirty check.
 watch(isOpen, (value) => {
@@ -318,6 +387,7 @@ watch(isOpen, (value) => {
       })
   // `defaults.sessions` is how the day calendar hands over a dragged-out time range.
   sessions.value = (t?.sessions ?? defaults.value.sessions ?? []).map(s => ({ ...s }))
+  checklist.value = (t?.checklist ?? []).map(c => ({ ...c }))
   snapshot.value = fingerprint()
   nextTick(() => {
     const el = titleInput.value?.$el as HTMLInputElement | undefined
@@ -340,6 +410,33 @@ function addBlock() {
   })
 }
 
+/** Focus by id rather than a ref array: ids are stable, v-for ref order is not. */
+function focusItem(id: string) {
+  nextTick(() => {
+    const el = document.getElementById(`${formId}-item-${id}`) as HTMLInputElement | null
+    el?.focus()
+    el?.setSelectionRange(el.value.length, el.value.length)
+  })
+}
+
+function addItem(index: number) {
+  const item: ChecklistItem = { id: uid('chk'), text: '', done: false }
+  checklist.value.splice(index, 0, item)
+  focusItem(item.id)
+}
+
+const removeItem = (index: number) => checklist.value.splice(index, 1)
+
+/** Backspace in an empty row deletes it and lands the caret on the one above,
+    so a whole list can be written and unwritten without leaving the keyboard. */
+function onItemBackspace(event: KeyboardEvent, index: number) {
+  if ((event.target as HTMLInputElement).value) return
+  event.preventDefault()
+  const prev = checklist.value[index - 1]
+  removeItem(index)
+  if (prev) focusItem(prev.id)
+}
+
 function save() {
   touched.title = true
   if (!form.title.trim() || sessionError.value) return
@@ -353,6 +450,8 @@ function save() {
     sprintId: form.sprintId === 'none' ? null : form.sprintId,
     epicId: form.epicId === 'none' ? null : form.epicId,
     sessions: sessions.value.map(s => ({ ...s })),
+    // Blank rows are scaffolding for typing, never content worth storing.
+    checklist: checklist.value.filter(c => c.text.trim()).map(c => ({ ...c, text: c.text.trim() })),
   }
 
   if (editing.value) {

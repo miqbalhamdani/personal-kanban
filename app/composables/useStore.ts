@@ -103,6 +103,7 @@ function normaliseTask(t: Partial<Task>): Task {
     // 'backlog' was folded into 'todo'; older blobs still carry it.
     status: ((t.status as string) === 'backlog' ? 'todo' : t.status ?? 'todo') as Status,
     sessions: Array.isArray(t.sessions) ? t.sessions.filter(s => s?.date && s?.start && s?.end) : [],
+    checklist: Array.isArray(t.checklist) ? t.checklist.filter(c => c?.id).map(c => ({ ...c, done: !!c.done })) : [],
     order: t.order ?? 0,
     createdAt: t.createdAt ?? Date.now(),
   }

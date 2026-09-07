@@ -10,6 +10,13 @@ export interface Session {
   end: string   // HH:mm
 }
 
+/** One line of a task's checklist: a subtask small enough to not deserve its own card. */
+export interface ChecklistItem {
+  id: string
+  text: string
+  done: boolean
+}
+
 export interface Task {
   id: string
   title: string
@@ -20,6 +27,7 @@ export interface Task {
   epicId: string | null
   status: Status
   sessions: Session[]
+  checklist: ChecklistItem[]
   order: number
   createdAt: number
 }

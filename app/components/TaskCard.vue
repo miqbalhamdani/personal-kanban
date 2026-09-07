@@ -39,14 +39,25 @@
           {{ summary }}
         </p>
 
-        <p
-          v-if="task.dueDate"
-          class="tnum mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium"
-          :class="overdue ? 'text-red-800' : 'text-muted-foreground'"
-        >
-          <CalendarDays class="size-3" aria-hidden="true" />
-          <span class="sr-only">{{ overdue ? 'Overdue, due' : 'Due' }} </span>{{ fmtRelativeDay(task.dueDate) }}
-        </p>
+        <div v-if="task.dueDate || checklist.total" class="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <span
+            v-if="task.dueDate"
+            class="tnum inline-flex items-center gap-1 text-[11px] font-medium"
+            :class="overdue ? 'text-red-800' : 'text-muted-foreground'"
+          >
+            <CalendarDays class="size-3" aria-hidden="true" />
+            <span class="sr-only">{{ overdue ? 'Overdue, due' : 'Due' }} </span>{{ fmtRelativeDay(task.dueDate) }}
+          </span>
+
+          <span
+            v-if="checklist.total"
+            class="tnum inline-flex items-center gap-1 text-[11px] font-medium"
+            :class="checklist.complete ? 'text-primary' : 'text-muted-foreground'"
+          >
+            <ListChecks class="size-3" aria-hidden="true" />
+            <span class="sr-only">Checklist </span>{{ checklist.done }}/{{ checklist.total }}
+          </span>
+        </div>
       </article>
     </ContextMenuTrigger>
 
@@ -100,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { CalendarDays, Clock, MoveRight, Pencil, Trash2 } from '@lucide/vue'
+import { CalendarDays, Clock, ListChecks, MoveRight, Pencil, Trash2 } from '@lucide/vue'
 import type { Task } from '~/types'
 import {
   ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator,
@@ -123,6 +134,11 @@ const today = todayISO()
 const epic = computed(() => store.epic(props.task.epicId))
 /** Descriptions hold light HTML now; previews show one flat line of it. */
 const summary = computed(() => htmlToText(props.task.description))
+const checklist = computed(() => {
+  const total = props.task.checklist.length
+  const done = props.task.checklist.filter(c => c.done).length
+  return { total, done, complete: total > 0 && done === total }
+})
 const overdue = computed(() =>
   !!props.task.dueDate
   && props.task.dueDate < today
