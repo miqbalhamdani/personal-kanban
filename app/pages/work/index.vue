@@ -80,7 +80,7 @@
 import { ChevronLeft, ChevronRight, Plus } from '@lucide/vue'
 import { Button } from '~/components/ui/button'
 import { addDays, fmtDayLong, fmtMonthDay, fmtRelativeDay, todayISO } from '~/utils/date'
-import { PRIORITY_RANK } from '~/utils/labels'
+import { byPriorityThenTitle } from '~/utils/labels'
 
 const store = useStore()
 const { state } = store
@@ -105,20 +105,17 @@ const open = computed(() => {
     : []
 })
 
-const byPriorityThenOrder = (a: { priority: keyof typeof PRIORITY_RANK; order: number }, b: typeof a) =>
-  PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order
-
 // `open`, not every task: a finished card is not work for today.
 const days = computed(() => window4.value.map(date => ({
   date,
-  tasks: open.value.filter(t => t.dueDate === date).sort(byPriorityThenOrder),
+  tasks: open.value.filter(t => t.dueDate === date).sort(byPriorityThenTitle),
 })))
 
 // Overdue and undated work, minus anything the visible window already shows: stepping
 // back a day would otherwise list that day's cards twice.
 const spillover = computed(() => open.value
   .filter(t => !t.dueDate || (t.dueDate < today && !window4.value.includes(t.dueDate)))
-  .sort(byPriorityThenOrder))
+  .sort(byPriorityThenTitle))
 const overdueShown = computed(() => spillover.value.filter(t => t.dueDate).length)
 
 // Live clock with seconds in the header.

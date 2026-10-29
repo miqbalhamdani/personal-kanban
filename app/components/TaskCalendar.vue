@@ -89,7 +89,7 @@ import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { Task } from '~/types'
 import { Button } from '~/components/ui/button'
 import { addDays, eachDay, fmtLongDate, fmtWeekday, fromISO, isWeekend, toISO, todayISO } from '~/utils/date'
-import { epicTint, PRIORITY_RANK } from '~/utils/labels'
+import { byPriorityThenTitle, epicTint } from '~/utils/labels'
 
 const props = defineProps<{ tasks: Task[] }>()
 
@@ -132,7 +132,7 @@ const byDay = computed(() => {
     map.set(t.dueDate, list)
   }
   for (const list of map.values())
-    list.sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order)
+    list.sort(byPriorityThenTitle)
   return map
 })
 

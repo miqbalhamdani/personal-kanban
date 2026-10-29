@@ -97,7 +97,7 @@
 import { ChevronRight, Layers, ListPlus, ListTodo, Pencil, Plus } from '@lucide/vue'
 import { Button } from '~/components/ui/button'
 import { fmtDuration, fmtMonthDay } from '~/utils/date'
-import { PRIORITY_LABEL, PRIORITY_RANK, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
+import { byPriorityThenTitle, PRIORITY_LABEL, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
 
 const route = useRoute()
 const store = useStore()
@@ -138,7 +138,7 @@ const statusGroups = computed(() => STATUSES
   .map(status => ({
     status,
     tasks: [...epicTasks.value.filter(t => t.status === status)]
-      .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order),
+      .sort(byPriorityThenTitle),
   }))
   .filter(g => g.tasks.length))
 
