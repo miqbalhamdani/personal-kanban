@@ -97,7 +97,13 @@ const window4 = computed(() => [0, 1, 2, 3].map(n => addDays(viewDay.value, n)))
 const step = (n: number) => { viewDay.value = addDays(viewDay.value, n) }
 const goToday = () => { viewDay.value = today }
 
-const open = computed(() => state.tasks.filter(t => t.status !== 'done' && t.status !== 'cancelled'))
+// Today is the running sprint's work: nothing planned for later, nothing unassigned.
+const open = computed(() => {
+  const sprintId = store.activeSprint.value?.id
+  return sprintId
+    ? state.tasks.filter(t => t.sprintId === sprintId && t.status !== 'done' && t.status !== 'cancelled')
+    : []
+})
 
 const byPriorityThenOrder = (a: { priority: keyof typeof PRIORITY_RANK; order: number }, b: typeof a) =>
   PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order
