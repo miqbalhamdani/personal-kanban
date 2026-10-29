@@ -10,7 +10,7 @@
       <SheetHeader class="border-b px-5 py-4">
         <SheetTitle>{{ editing ? 'Edit task' : 'New task' }}</SheetTitle>
         <SheetDescription>
-          {{ editing ? 'Changes save when you press Save task.' : 'Give it a title now; the rest can wait.' }}
+          {{ editing ? 'Changes save when you close the panel.' : 'Give it a title now; the rest can wait.' }}
         </SheetDescription>
       </SheetHeader>
 
@@ -283,7 +283,7 @@
         </Button>
         <span v-else />
         <div class="flex gap-2">
-          <Button type="button" variant="outline" @click="requestClose">Cancel</Button>
+          <Button type="button" variant="outline" @click="requestClose">{{ editing ? 'Close' : 'Cancel' }}</Button>
           <Button type="submit" :form="formId" :disabled="!form.title.trim()">
             {{ editing ? 'Save task' : 'Create task' }}
           </Button>
@@ -476,6 +476,8 @@ function removeAndClose() {
 /** Esc and outside-click both route through the dirty guard. */
 function requestClose() {
   if (!dirty.value) return close()
+  // An edit saves on the way out; only an unsaved new task asks first.
+  if (editing.value) return save()
   confirming.value = true
 }
 
