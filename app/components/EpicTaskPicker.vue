@@ -90,7 +90,7 @@ import {
 } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { fmtMonthDay } from '~/utils/date'
-import { PRIORITY_RANK, STATUS_DOT, STATUS_LABEL } from '~/utils/labels'
+import { byPriorityThenTitle, STATUS_DOT, STATUS_LABEL } from '~/utils/labels'
 import { htmlToText } from '~/utils/richtext'
 
 const epicId = defineModel<string | null>('epicId', { required: true })
@@ -105,7 +105,7 @@ const filterInput = ref<{ $el?: HTMLElement } | null>(null)
 
 const candidates = computed(() => [...state.tasks]
   .filter(t => !t.epicId)
-  .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order))
+  .sort(byPriorityThenTitle))
 
 const matches = computed(() => {
   const q = query.value.trim().toLowerCase()

@@ -204,7 +204,7 @@ import {
 } from '~/components/ui/dropdown-menu'
 import { Input } from '~/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
-import { PRIORITIES, PRIORITY_LABEL, PRIORITY_RANK, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
+import { byPriorityThenTitle, PRIORITIES, PRIORITY_LABEL, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
 import { htmlToText } from '~/utils/richtext'
 
 const store = useStore()
@@ -247,8 +247,7 @@ const filtered = computed(() => {
   })
 })
 
-const sortTasks = <T extends { priority: keyof typeof PRIORITY_RANK; order: number }>(list: T[]) =>
-  [...list].sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order)
+const sortTasks = (list: Task[]) => [...list].sort(byPriorityThenTitle)
 
 /** List view sorts by manual order alone so move up/down and drop position always win. */
 const byOrder = <T extends { order: number }>(list: T[]) => [...list].sort((a, b) => a.order - b.order)

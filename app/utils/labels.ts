@@ -40,6 +40,12 @@ export const PRIORITY_CLASS: Record<Priority, string> = {
 
 export const PRIORITY_RANK: Record<Priority, number> = { high: 0, medium: 1, low: 2 }
 
+type Rankable = { priority: Priority; title: string }
+
+/** High to low, then A–Z by title, so a column reads the same on every visit. */
+export const byPriorityThenTitle = (a: Rankable, b: Rankable) =>
+  PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.title.localeCompare(b.title)
+
 /* Epic swatches. Ordered so one epic's auto-assigned colour and the next sit far
    apart perceptually. Names are the accessible swatch label, so hex and name stay
    in one place. Half the set is pastel, so anything drawn on top of a swatch has to

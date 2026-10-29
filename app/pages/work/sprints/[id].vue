@@ -230,7 +230,7 @@ import { Button } from '~/components/ui/button'
 import {
   eachDay, fmtDuration, fmtLongDate, fmtMonthDay, fmtWeekday, isWeekend, toMinutes,
 } from '~/utils/date'
-import { PRIORITY_RANK, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
+import { byPriorityThenTitle, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
 
 const route = useRoute()
 const router = useRouter()
@@ -267,7 +267,7 @@ const statusGroups = computed(() => STATUSES
   .map(status => ({
     status,
     tasks: [...sprintTasks.value.filter(t => t.status === status)]
-      .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order),
+      .sort(byPriorityThenTitle),
   }))
   .filter(g => g.tasks.length))
 

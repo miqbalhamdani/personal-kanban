@@ -80,7 +80,7 @@
 import { ChevronLeft, ChevronRight, Plus } from '@lucide/vue'
 import { Button } from '~/components/ui/button'
 import { addDays, fmtDayLong, fmtMonthDay, fmtRelativeDay, todayISO } from '~/utils/date'
-import { PRIORITY_RANK } from '~/utils/labels'
+import { byPriorityThenTitle } from '~/utils/labels'
 
 const store = useStore()
 const { state } = store
@@ -97,22 +97,25 @@ const window4 = computed(() => [0, 1, 2, 3].map(n => addDays(viewDay.value, n)))
 const step = (n: number) => { viewDay.value = addDays(viewDay.value, n) }
 const goToday = () => { viewDay.value = today }
 
-const open = computed(() => state.tasks.filter(t => t.status !== 'done' && t.status !== 'cancelled'))
-
-const byPriorityThenOrder = (a: { priority: keyof typeof PRIORITY_RANK; order: number }, b: typeof a) =>
-  PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order
+// Today is the running sprint's work: nothing planned for later, nothing unassigned.
+const open = computed(() => {
+  const sprintId = store.activeSprint.value?.id
+  return sprintId
+    ? state.tasks.filter(t => t.sprintId === sprintId && t.status !== 'done' && t.status !== 'cancelled')
+    : []
+})
 
 // `open`, not every task: a finished card is not work for today.
 const days = computed(() => window4.value.map(date => ({
   date,
-  tasks: open.value.filter(t => t.dueDate === date).sort(byPriorityThenOrder),
+  tasks: open.value.filter(t => t.dueDate === date).sort(byPriorityThenTitle),
 })))
 
 // Overdue and undated work, minus anything the visible window already shows: stepping
 // back a day would otherwise list that day's cards twice.
 const spillover = computed(() => open.value
   .filter(t => !t.dueDate || (t.dueDate < today && !window4.value.includes(t.dueDate)))
-  .sort(byPriorityThenOrder))
+  .sort(byPriorityThenTitle))
 const overdueShown = computed(() => spillover.value.filter(t => t.dueDate).length)
 
 // Live clock with seconds in the header.

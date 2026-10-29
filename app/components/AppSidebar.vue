@@ -69,12 +69,16 @@ const emit = defineEmits<{ navigate: [] }>()
 const route = useRoute()
 const settings = useSettingsDialog()
 const { helpOpen } = useShortcuts()
-const { state, clearAll, sprintPhase } = useStore()
+const { state, clearAll, sprintPhase, activeSprint } = useStore()
 
+// Mirrors the Today page, which only shows the running sprint.
 const dueSoon = computed(() => {
+  const sprintId = activeSprint.value?.id
+  if (!sprintId) return 0
   const today = todayISO()
   return state.tasks.filter(t =>
-    t.dueDate && t.dueDate >= today && t.dueDate <= addDays(today, 3)
+    t.sprintId === sprintId
+    && t.dueDate && t.dueDate >= today && t.dueDate <= addDays(today, 3)
     && t.status !== 'done' && t.status !== 'cancelled',
   ).length
 })
