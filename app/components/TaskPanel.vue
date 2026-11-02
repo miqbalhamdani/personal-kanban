@@ -98,8 +98,25 @@
                 <div class="h-full rounded-full bg-primary transition-[width] duration-200" :style="{ width: `${progress}%` }" />
               </div>
             </template>
+            <Button v-if="bulkText === null" type="button" variant="ghost" size="sm" class="-my-1 h-7 px-2 text-xs" @click="openBulk">
+              Edit as text
+            </Button>
           </div>
-          <div class="grid gap-2 p-4">
+          <div v-if="bulkText !== null" class="grid gap-2 p-4">
+            <Textarea
+              :id="`${formId}-bulk`"
+              v-model="bulkText"
+              :aria-labelledby="`${formId}-check-label`"
+              :aria-describedby="`${formId}-bulk-hint`"
+              placeholder="One step per line"
+              class="min-h-28"
+            />
+            <p :id="`${formId}-bulk-hint`" class="text-xs leading-relaxed text-muted-foreground">
+              One step per line. Pasted bullets are cleaned up; start a line with [x] to mark it done.
+            </p>
+            <Button type="button" size="sm" class="justify-self-end" @click="closeBulk">Done</Button>
+          </div>
+          <div v-else class="grid gap-2 p-4">
             <p v-if="!checklist.length" class="text-xs leading-relaxed text-muted-foreground">
               Nothing to check off yet. Break the task into steps below.
             </p>
@@ -302,6 +319,8 @@ import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '~/components/ui/sheet'
+import { Textarea } from '~/components/ui/textarea'
+import { checklistToText, parseChecklistText } from '~/utils/checklist'
 import { todayISO, toMinutes, toTime } from '~/utils/date'
 import { PRIORITIES, PRIORITY_LABEL, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
 import { uid } from '~/utils/seed'
@@ -346,6 +365,8 @@ const blank = () => ({
 const form = reactive(blank())
 const sessions = ref<Session[]>([])
 const checklist = ref<ChecklistItem[]>([])
+/** Non-null while the checklist is being edited as one block of text. */
+const bulkText = ref<string | null>(null)
 const touched = reactive({ title: false })
 const snapshot = ref('')
 const confirming = ref(false)
@@ -388,6 +409,7 @@ watch(isOpen, (value) => {
   // `defaults.sessions` is how the day calendar hands over a dragged-out time range.
   sessions.value = (t?.sessions ?? defaults.value.sessions ?? []).map(s => ({ ...s }))
   checklist.value = (t?.checklist ?? []).map(c => ({ ...c }))
+  bulkText.value = null
   snapshot.value = fingerprint()
   nextTick(() => {
     const el = titleInput.value?.$el as HTMLInputElement | undefined
@@ -437,7 +459,20 @@ function onItemBackspace(event: KeyboardEvent, index: number) {
   if (prev) focusItem(prev.id)
 }
 
+function openBulk() {
+  bulkText.value = checklistToText(checklist.value)
+  nextTick(() => document.getElementById(`${formId}-bulk`)?.focus())
+}
+
+/** Ids are reused by position, so opening and closing without edits leaves the dirty check clean. */
+function closeBulk() {
+  if (bulkText.value === null) return
+  checklist.value = parseChecklistText(bulkText.value).map((c, i) => ({ id: checklist.value[i]?.id ?? uid('chk'), ...c }))
+  bulkText.value = null
+}
+
 function save() {
+  closeBulk()
   touched.title = true
   if (!form.title.trim() || sessionError.value) return
 
@@ -475,6 +510,8 @@ function removeAndClose() {
 
 /** Esc and outside-click both route through the dirty guard. */
 function requestClose() {
+  // Text still in the textarea counts as an edit, so fold it back into rows first.
+  closeBulk()
   if (!dirty.value) return close()
   // An edit saves on the way out; only an unsaved new task asks first.
   if (editing.value) return save()
