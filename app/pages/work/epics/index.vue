@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-[calc(100dvh-3.5rem)] lg:min-h-dvh">
-    <PageHeader title="Epics" :subtitle="`${state.epics.length} epics on the timeline`">
+    <PageHeader title="Epics" :subtitle="subtitle">
       <template #actions>
         <Button class="gap-1.5" @click="editing = 'new'">
           <Plus class="size-4" /> New epic
@@ -10,12 +10,14 @@
 
     <div class="space-y-4 p-4 sm:px-6 sm:py-6">
       <EmptyState
-        v-if="!state.epics.length"
+        v-if="!rows.length"
         :icon="Layers"
-        title="No epics yet"
+        :title="archivedRows.length ? 'Every epic is archived' : 'No epics yet'"
         description="Epics group related tasks and give the sprint charts their colours."
       >
-        <Button size="sm" variant="outline" @click="editing = 'new'">Create the first epic</Button>
+        <Button size="sm" variant="outline" @click="editing = 'new'">
+          {{ archivedRows.length ? 'Create an epic' : 'Create the first epic' }}
+        </Button>
       </EmptyState>
 
       <section v-else class="overflow-hidden rounded-2xl border bg-card">
@@ -190,6 +192,42 @@
           </div>
         </div>
       </section>
+
+      <!-- Archived: off the timeline, still one click from their page. Same anatomy as the Sprint groups. -->
+      <section v-if="archivedRows.length" class="rounded-2xl border bg-card">
+        <button
+          type="button"
+          class="flex min-h-12 w-full items-center gap-2.5 px-4 text-left"
+          :aria-expanded="showArchived"
+          @click="showArchived = !showArchived"
+        >
+          <ChevronRight
+            class="size-4 shrink-0 text-muted-foreground transition-transform duration-150"
+            :class="showArchived && 'rotate-90'"
+            aria-hidden="true"
+          />
+          <span class="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[12px] font-semibold text-muted-foreground">Archived</span>
+          <span class="tnum ml-auto shrink-0 text-[11px] text-muted-foreground">
+            {{ archivedRows.length }} {{ archivedRows.length === 1 ? 'epic' : 'epics' }}
+          </span>
+        </button>
+
+        <ul v-if="showArchived" class="border-t">
+          <li v-for="epic in archivedRows" :key="epic.id">
+            <NuxtLink
+              :to="`/work/epics/${epic.id}`"
+              class="flex min-h-12 items-center gap-3 border-b px-4 py-2.5 transition-colors duration-150 hover:bg-muted/60"
+              :aria-label="`${epic.name}. Open epic detail.`"
+            >
+              <span class="size-2.5 shrink-0 rounded-full" :style="{ background: epic.color }" aria-hidden="true" />
+              <span class="min-w-0 grow truncate text-[13px] font-medium">{{ epic.name }}</span>
+              <span class="tnum shrink-0 text-[11px] text-muted-foreground">
+                {{ epic.doneCount }}/{{ epic.taskCount }} done · {{ PRIORITY_LABEL[epic.priority] }}
+              </span>
+            </NuxtLink>
+          </li>
+        </ul>
+      </section>
     </div>
 
     <EpicDialog v-model:epic-id="editing" />
@@ -244,8 +282,9 @@ function taskSpan(t: Task): { start: string; end: string } | null {
   return dates.length ? { start: dates[0]!, end: dates.at(-1)! } : null
 }
 
-/** The epic's own window when it has both ends; otherwise stretched over whatever its tasks touch. */
-const epicSpans = computed(() => new Map(state.epics.map((e) => {
+/** The epic's own window when it has both ends; otherwise stretched over whatever its tasks touch.
+    Archived epics are left out so they no longer stretch the timeline. */
+const epicSpans = computed(() => new Map(state.epics.filter(e => !e.archived).map((e) => {
   if (e.startDate && e.endDate) return [e.id, { start: e.startDate, end: e.endDate }]
   const dates = state.tasks
     .filter(t => t.epicId === e.id)
@@ -285,7 +324,7 @@ const toBar = (span: { start: string; end: string } | null) => {
   return { ...span, offset: diffDays(first, span.start), length: diffDays(span.start, span.end) + 1 }
 }
 
-const rows = computed(() => [...state.epics]
+const allRows = computed(() => [...state.epics]
   .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.name.localeCompare(b.name))
   .map((e) => {
     const tasks = state.tasks
@@ -303,4 +342,14 @@ const rows = computed(() => [...state.epics]
       bar: toBar(epicSpans.value.get(e.id) ?? null),
     }
   }))
+
+const rows = computed(() => allRows.value.filter(e => !e.archived))
+const archivedRows = computed(() => allRows.value.filter(e => e.archived))
+const showArchived = ref(false)
+
+const subtitle = computed(() => {
+  const n = rows.value.length
+  const archived = archivedRows.value.length
+  return `${n} ${n === 1 ? 'epic' : 'epics'} on the timeline${archived ? ` · ${archived} archived` : ''}`
+})
 </script>

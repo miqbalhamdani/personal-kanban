@@ -18,6 +18,9 @@
           :title="`Epic colour: ${epic.color}`"
           aria-hidden="true"
         />
+        <span v-if="epic.archived" class="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+          Archived
+        </span>
       </template>
 
       <template #actions>
@@ -26,6 +29,10 @@
           <Stat :value="`${percentDone}%`" label="completed" />
           <Stat :value="fmtDuration(totalMinutes)" label="tracked" />
         </div>
+        <Button variant="outline" class="gap-1.5" @click="toggleArchive">
+          <component :is="epic.archived ? ArchiveRestore : Archive" class="size-4" />
+          {{ epic.archived ? 'Unarchive' : 'Archive' }}
+        </Button>
         <Button variant="outline" class="gap-1.5" @click="editing = epic.id">
           <Pencil class="size-3.5" /> Edit
         </Button>
@@ -94,7 +101,8 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronRight, Layers, ListPlus, ListTodo, Pencil, Plus } from '@lucide/vue'
+import { Archive, ArchiveRestore, ChevronRight, Layers, ListPlus, ListTodo, Pencil, Plus } from '@lucide/vue'
+import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'
 import { fmtDuration, fmtMonthDay } from '~/utils/date'
 import { byPriorityThenTitle, PRIORITY_LABEL, STATUS_DOT, STATUS_LABEL, STATUSES } from '~/utils/labels'
@@ -150,6 +158,18 @@ const percentDone = computed(() => {
 })
 
 const totalMinutes = computed(() => epicTasks.value.reduce((sum, t) => sum + store.trackedMinutes(t), 0))
+
+/** Archiving only takes the epic off the timeline; its tasks keep pointing at it. */
+function toggleArchive() {
+  const e = epic.value
+  if (!e) return
+  const archived = !e.archived
+  store.updateEpic(e.id, { archived })
+  toast.success(archived ? `Archived "${e.name}"` : `Unarchived "${e.name}"`, {
+    description: archived ? 'Off the timeline. Its tasks keep the epic.' : 'Back on the timeline.',
+    action: { label: 'Undo', onClick: () => store.updateEpic(e.id, { archived: !archived }) },
+  })
+}
 
 /** The point of this page's New task button: the epic is already picked in the form. */
 const newTask = () => dialog.openNew({ epicId: epic.value?.id, status: 'todo' })

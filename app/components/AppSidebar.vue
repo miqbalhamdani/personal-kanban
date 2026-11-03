@@ -96,7 +96,7 @@ const groups = computed(() => [
     items: [
       { to: '/work/tasks', label: 'Task', icon: ListTodo, count: openTasks.value },
       { to: '/work/sprints', label: 'Sprint', icon: GitBranch, count: activeSprints.value },
-      { to: '/work/epics', label: 'Epics', icon: Layers, count: state.epics.length },
+      { to: '/work/epics', label: 'Epics', icon: Layers, count: state.epics.filter(e => !e.archived).length },
     ],
   },
 ])

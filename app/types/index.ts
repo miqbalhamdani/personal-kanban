@@ -52,6 +52,8 @@ export interface Epic {
   endDate: string | null
   priority: Priority
   color: string
+  /** Off the timeline, but still openable and still the epic of its tasks. */
+  archived?: boolean
 }
 
 export type SprintPhase = 'active' | 'future' | 'archived'

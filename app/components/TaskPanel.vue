@@ -206,7 +206,7 @@
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No epic</SelectItem>
-                  <SelectItem v-for="e in state.epics" :key="e.id" :value="e.id">
+                  <SelectItem v-for="e in epicOptions" :key="e.id" :value="e.id">
                     <span class="size-2 rounded-full" :style="{ background: e.color }" aria-hidden="true" />
                     {{ e.name }}
                   </SelectItem>
@@ -334,6 +334,9 @@ const formId = useId()
 const titleInput = ref<{ $el?: HTMLElement } | null>(null)
 
 const editing = computed(() => (editingId.value ? store.task(editingId.value) : undefined))
+
+/** Archived epics are off the menu, except the one this task already belongs to, so the link survives. */
+const epicOptions = computed(() => state.epics.filter(e => !e.archived || e.id === form.epicId))
 
 /**
  * Only current and future sprints are assignable, grouped so the trigger shows
