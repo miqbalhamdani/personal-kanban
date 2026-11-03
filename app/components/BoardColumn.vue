@@ -42,6 +42,9 @@
       <p v-if="!tasks.length" class="rounded-xl border border-dashed px-3 py-6 text-center text-xs leading-relaxed text-muted-foreground">
         {{ emptyText }}
       </p>
+
+      <!-- Extra cards that ride along in this column's scroll, e.g. Today's "Needs a date". -->
+      <slot />
     </div>
 
     <footer v-if="addable && !ghost" class="px-2 pb-2">

@@ -42,7 +42,7 @@
 
         <div class="flex min-h-0 grow gap-3 overflow-x-auto pb-2 scroll-thin">
           <BoardColumn
-            v-for="day in days"
+            v-for="(day, i) in days"
             :key="day.date"
             :title="fmtRelativeDay(day.date)"
             :subtitle="fmtMonthDay(day.date)"
@@ -54,19 +54,22 @@
             empty-text="No task due on this day."
             @add="dialog.openNew({ dueDate: day.date, status: 'todo' })"
             @drop-task="id => onDropOnDay(id, day.date)"
-          />
-
-          <!-- Overdue and undated work has to live somewhere, or it silently vanishes. -->
-          <BoardColumn
-            v-if="spillover.length"
-            title="Needs a date"
-            :subtitle="`${overdueShown} overdue`"
-            :tasks="spillover"
-            drop-id="day:none"
-            variant="ghost"
-            empty-text="Everything has a date."
-            @drop-task="id => actions.setDueDate(store.task(id)!, null)"
-          />
+          >
+            <!-- Overdue and undated work has to live somewhere, or it silently vanishes:
+                 it rides under the first day, so dropping it there dates it. -->
+            <template v-if="i === 0 && spillover.length">
+              <div class="mt-1 flex items-center gap-2 border-t border-dashed px-1 pt-3">
+                <h3 class="min-w-0 grow truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Needs a date
+                </h3>
+                <span v-if="overdueShown" class="tnum shrink-0 text-[11px] text-muted-foreground">{{ overdueShown }} overdue</span>
+                <span class="tnum shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  {{ spillover.length }}
+                </span>
+              </div>
+              <TaskCard v-for="task in spillover" :key="task.id" :task="task" />
+            </template>
+          </BoardColumn>
         </div>
       </div>
 
