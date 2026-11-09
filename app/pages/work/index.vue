@@ -35,7 +35,7 @@
       <div class="flex h-[460px] min-w-0 flex-col gap-2 xl:h-auto xl:min-h-0 xl:py-4">
         <div class="flex items-baseline justify-between gap-2">
           <h2 class="text-sm font-semibold">
-            {{ onToday ? 'Next four days' : `${fmtMonthDay(window4[0]!)} – ${fmtMonthDay(window4.at(-1)!)}` }}
+            {{ onToday ? `Next ${windowDays.length} days` : `${fmtMonthDay(windowDays[0]!)} – ${fmtMonthDay(windowDays.at(-1)!)}` }}
           </h2>
           <p class="hidden text-[11px] text-muted-foreground sm:block">Drop a card on a day to change its due date</p>
         </div>
@@ -82,7 +82,7 @@
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight, Plus } from '@lucide/vue'
 import { Button } from '~/components/ui/button'
-import { addDays, fmtDayLong, fmtMonthDay, fmtRelativeDay, todayISO } from '~/utils/date'
+import { addDays, diffDays, fmtDayLong, fmtMonthDay, fmtRelativeDay, todayISO } from '~/utils/date'
 import { byPriorityThenTitle } from '~/utils/labels'
 
 const store = useStore()
@@ -95,7 +95,13 @@ const actions = useTaskActions()
 const today = todayISO()
 const viewDay = ref(today)
 const onToday = computed(() => viewDay.value === today)
-const window4 = computed(() => [0, 1, 2, 3].map(n => addDays(viewDay.value, n)))
+/** From the day in view to the running sprint's last day, so the board scrolls
+    through the whole sprint; never fewer than four days. */
+const windowDays = computed(() => {
+  const end = store.activeSprint.value?.endDate
+  const n = Math.max(4, end ? diffDays(viewDay.value, end) + 1 : 0)
+  return Array.from({ length: n }, (_, i) => addDays(viewDay.value, i))
+})
 
 const step = (n: number) => { viewDay.value = addDays(viewDay.value, n) }
 const goToday = () => { viewDay.value = today }
@@ -109,7 +115,7 @@ const open = computed(() => {
 })
 
 // `open`, not every task: a finished card is not work for today.
-const days = computed(() => window4.value.map(date => ({
+const days = computed(() => windowDays.value.map(date => ({
   date,
   tasks: open.value.filter(t => t.dueDate === date).sort(byPriorityThenTitle),
 })))
@@ -117,7 +123,7 @@ const days = computed(() => window4.value.map(date => ({
 // Overdue and undated work, minus anything the visible window already shows: stepping
 // back a day would otherwise list that day's cards twice.
 const spillover = computed(() => open.value
-  .filter(t => !t.dueDate || (t.dueDate < today && !window4.value.includes(t.dueDate)))
+  .filter(t => !t.dueDate || (t.dueDate < today && !windowDays.value.includes(t.dueDate)))
   .sort(byPriorityThenTitle))
 const overdueShown = computed(() => spillover.value.filter(t => t.dueDate).length)
 
