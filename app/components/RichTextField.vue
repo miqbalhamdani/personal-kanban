@@ -28,7 +28,7 @@
         role="textbox"
         aria-multiline="true"
         :aria-labelledby="labelledby"
-        class="min-h-[72px] px-3 py-2 text-sm leading-relaxed outline-none [&_code]:rounded [&_code]:bg-background [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[12px] [&_li]:my-0.5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-0 [&_pre]:my-1 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-background [&_pre]:p-2 [&_pre]:font-mono [&_pre]:text-[12px] [&_pre]:whitespace-pre-wrap [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5"
+        class="min-h-[72px] px-3 py-2 text-sm leading-relaxed wrap-anywhere outline-none [&_code]:rounded [&_code]:bg-background [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[12px] [&_li]:my-0.5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-0 [&_pre]:my-1 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-background [&_pre]:p-2 [&_pre]:font-mono [&_pre]:text-[12px] [&_pre]:whitespace-pre-wrap [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5"
         @keydown="onKeydown"
         @input="onInput"
         @blur="emitValue"

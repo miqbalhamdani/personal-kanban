@@ -48,7 +48,7 @@
     <div class="space-y-3 p-4 sm:px-6 sm:py-6">
       <section v-if="epic.description" class="rounded-2xl border bg-card px-4 py-3">
         <h2 class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Description</h2>
-        <p class="mt-1 whitespace-pre-line text-[13px] leading-relaxed">{{ epic.description }}</p>
+        <p class="mt-1 whitespace-pre-line text-[13px] leading-relaxed wrap-anywhere">{{ epic.description }}</p>
       </section>
 
       <EmptyState

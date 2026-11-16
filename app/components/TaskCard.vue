@@ -35,7 +35,7 @@
           {{ task.title }}
         </p>
 
-        <p v-if="summary" class="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+        <p v-if="summary" class="mt-1 line-clamp-2 text-xs leading-relaxed wrap-anywhere text-muted-foreground">
           {{ summary }}
         </p>
 
