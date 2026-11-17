@@ -1,0 +1,12 @@
+{
+  "name": "intently",
+  "main": "./.output/server/index.mjs",
+  "compatibility_date": "2025-09-01",
+  "workers_dev": true,
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./.output/public", "binding": "ASSETS" },
+  "routes": [
+    { "pattern": "www.intently.web.id", "custom_domain": true },
+    { "pattern": "intently.web.id", "custom_domain": true }
+  ]
+}
